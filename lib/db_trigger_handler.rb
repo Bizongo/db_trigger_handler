@@ -1,6 +1,6 @@
 require "db_trigger_handler/version"
 
-module DbTriggerHandler
+module DbTriggerHandler extend ActiveSupport::Concerns
   included do
     before_action :set_event_listener
   end

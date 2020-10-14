@@ -5,8 +5,9 @@ module DbTriggerHandler
     before_action :set_event_listener
   end
 
-  def set_event_listener
-    Rails.logger.info notification_channels
+  def set_event_listener(base)
+    Rails.logger.info "Base :- #{base}"
+    Rails.logger.info "Base :- #{notification_channels}"
   end
 
   private

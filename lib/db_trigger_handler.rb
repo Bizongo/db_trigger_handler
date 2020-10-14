@@ -21,7 +21,7 @@ module DbTriggerHandler
             listen
           end
         ensure
-          @active_record_base..clear_active_connections!
+          @active_record_base.clear_active_connections!
         end
       end
     end

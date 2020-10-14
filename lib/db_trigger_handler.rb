@@ -1,15 +1,33 @@
 require "db_trigger_handler/version"
 
 module DbTriggerHandler
+  include SQL
+
   class << self
-    def init
-      Rails.logger.info "Base :- #{base}"
-      Rails.logger.info "Base :- #{notification_channels}"
+    def init(connection)
+      return if connection.blank?
+      @connection = connection
+      subscribe
+      listen
     end
 
     private
+    def subscribe
+      notification_channels.each do |channel|
+        SQL.subscribe_channel(@connection, channel)
+      end
+    end
+
+    def listen
+      loop do
+        @connection.raw_connection.wait_for_notify do |event, id, data|
+          pp "MessageReceived :- #{event}, #{id}, #{data}"
+        end
+      end
+    end
+
     def notification_channels
-      %w[SHIPMENT_CREATED SHIPMENT_CHANGED DPIR_CHANGED]
+      %w[SHIPMENT_CREATED SHIPMENT_CHANGED DPIR_CHANGED TRIGGER_FAILED]
     end
   end
 end

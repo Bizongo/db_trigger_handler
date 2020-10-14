@@ -20,9 +20,11 @@ module DbTriggerHandler
     end
 
     def listen
-      loop do
-        @connection.raw_connection.wait_for_notify do |event, id, data|
-          pp "MessageReceived :- #{event}, #{id}, #{data}"
+      Thread.new do
+        loop do
+          @connection.raw_connection.wait_for_notify do |event, id, data|
+            pp "MessageReceived :- #{event}, #{id}, #{data}"
+          end
         end
       end
     end

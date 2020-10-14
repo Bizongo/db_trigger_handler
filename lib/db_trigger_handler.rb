@@ -1,4 +1,5 @@
 require "db_trigger_handler/version"
+require "helpers/sql"
 
 module DbTriggerHandler
   include SQL

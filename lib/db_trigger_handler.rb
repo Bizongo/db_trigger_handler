@@ -1,11 +1,7 @@
 require "db_trigger_handler/version"
 
-module DbTriggerHandler extend ActiveSupport::Concerns
-  included do
-    before_action :set_event_listener
-  end
-
-  def set_event_listener(base)
+module DbTriggerHandler
+  def self.included(base)
     Rails.logger.info "Base :- #{base}"
     Rails.logger.info "Base :- #{notification_channels}"
   end

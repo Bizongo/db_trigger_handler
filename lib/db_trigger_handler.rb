@@ -3,6 +3,7 @@ require "helpers/sql"
 
 module DbTriggerHandler
   include SQL
+  include Shipment
 
   class << self
     def init(active_record_base)
@@ -36,7 +37,12 @@ module DbTriggerHandler
       begin
         loop do
           @connection.raw_connection.wait_for_notify do |event, id, data|
-            pp "MessageReceived :- #{event}, #{id}, #{data}"
+            case event
+            when 'shipment_create'
+              Shipment.shipment_create_handler(@connection, data)
+            when 'shipment_updated'
+              Shipment.shipment_create_handler(@connection, data)
+            end
           end
         end
       ensure

@@ -1,4 +1,4 @@
-module Shipment
+module ShipmentHandler
   class << self
     def shipment_create_handler(connection, data)
       parsed_data = JSON.parse data

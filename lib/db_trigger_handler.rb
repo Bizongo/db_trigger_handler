@@ -1,10 +1,10 @@
 require "db_trigger_handler/version"
 require "helpers/sql"
-require 'handlers/shipment'
+require 'handlers/shipment_handler'
 
 module DbTriggerHandler
   include SQL
-  include Shipment
+  include ShipmentHandler
 
   class << self
     def init(active_record_base)
@@ -40,9 +40,9 @@ module DbTriggerHandler
           @connection.raw_connection.wait_for_notify do |event, id, data|
             case event
             when 'shipment_create'
-              Shipment.shipment_create_handler(@connection, data)
+              ShipmentHandler.shipment_create_handler(@connection, data)
             when 'shipment_updated'
-              Shipment.shipment_create_handler(@connection, data)
+              ShipmentHandler.shipment_create_handler(@connection, data)
             end
           end
         end

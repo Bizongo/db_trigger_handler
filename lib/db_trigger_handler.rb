@@ -1,5 +1,6 @@
 require "db_trigger_handler/version"
 require "helpers/sql"
+require 'handlers/shipment'
 
 module DbTriggerHandler
   include SQL

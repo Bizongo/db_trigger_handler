@@ -7,8 +7,8 @@ module ShipmentHandler
     def shipment_create_handler(connection, data)
       parsed_data = JSON.parse data
       shipment_create_data = SQL.get_all_shipment_info(connection, parsed_data['id'])
-      pp "Shipment Data :- #{shipment_create_data}"
-      if [0,2,4].include? shipment_create_data['dispatch_plan']['dispatch_mode']
+      pp "Shipment Data :- #{shipment_create_data[:dispatch_plan]}"
+      if [0,2,4].include? shipment_create_data[:dispatch_plan]['dispatch_mode']
         # Create Invoice For seller_to_buyer, warehouse_to_warehouse, warehouse_to_buyer
         create_invoice shipment_create_data
       end

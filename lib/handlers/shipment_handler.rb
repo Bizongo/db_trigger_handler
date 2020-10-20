@@ -4,10 +4,13 @@ module ShipmentHandler
   include SQL
 
   class << self
+    @lead_plus_account_pan_mapping = {
+        54 => 'AAECH3221K'
+    }
+
     def shipment_create_handler(connection, data)
       parsed_data = JSON.parse data
       shipment_create_data = SQL.get_all_shipment_info(connection, parsed_data['id'])
-      pp "Shipment Data :- #{shipment_create_data[:dispatch_plan]}"
       if [0,2,4].include? shipment_create_data[:dispatch_plan]['dispatch_mode']
         # Create Invoice For seller_to_buyer, warehouse_to_warehouse, warehouse_to_buyer
         create_invoice shipment_create_data
@@ -18,24 +21,27 @@ module ShipmentHandler
 
     def create_invoice data
       @sku_codes = []
+      @account_name = ""
+      @entity_reference_number = ""
+      @center_id = nil
       invoice_creation_data = {
         invoice_date: Date.today.strftime("%Y-%m-%d"),
-        # entity_reference_number:,
         file: "",
         account_type: "BUYER",
-        # account_name:,
-        # pan: get_pan(data['dispatch_plan']),
-        # centre_reference_id:,
+        pan: get_pan(data['dispatch_plan']),
         amount: data[:shipment]['total_buyer_invoice_amount'].to_f - data[:shipment]['total_buyer_service_charge'].to_f,
         line_item_details: get_line_item_details(data),
         buyer_details: get_buyer_company_details(data),
+        account_name: @account_name,
+        entity_reference_number: @entity_reference_number,
+        centre_reference_id: @center_id,
         ship_to_details: get_address_object(data[:dispatch_plan]['destination_address_snapshot']),
         dispatch_from_details: get_address_object(data[:dispatch_plan]['origin_address_snapshot']),
         supporting_document_details: get_supporting_document_details(data),
         delivery_amount: data[:shipment]['total_buyer_service_charge'],
         shipment_id: data[:shipment]['id']
       }
-      pp invoice_creation_data.inspect
+      pp invoice_creation_data.to_json
     end
 
     def get_line_item_details data
@@ -66,10 +72,14 @@ module ShipmentHandler
     def get_buyer_company_details data
       address = data[:dispatch_plan]['destination_address_snapshot']
       address = JSON.parse address
+      @center_id = address['center_id']
       if [0,2].include? data[:dispatch_plan]['dispatch_mode']
         buyer_company_snapshot = JSON.parse data[:dispatch_plan]['buyer_company_snapshot']
+        @entity_reference_number = buyer_company_snapshot['purchase_order_no']
+        @center_id = buyer_company_snapshot['center_id']
         address = buyer_company_snapshot['billing_address']
       end
+      @account_name = address['company_name']
       {
           name: address['full_name'],
           company_name: address['company_name'],
@@ -129,6 +139,24 @@ module ShipmentHandler
           include_tax: product_details['include_tax'],
           currency_symbol: product_details['currency']
       }
+    end
+
+    def get_pan data
+      pan = ""
+      buyer_company_snapshot = JSON.parse data[:dispatch_plan]['buyer_company_snapshot']
+      destination_address = JSON.parse data[:dispatch_plan]['destination_address_snapshot']
+      account_id = buyer_company_snapshot['billing_address']['lead_plus_account_id']
+      billing_address = buyer_company_snapshot['billing_address']
+      if account_id.present? && @lead_plus_account_pan_mapping[account_id.to_i].present?
+        pan = @lead_plus_account_pan_mapping[account_id.to_i]
+      elsif billing_address.present? && billing_address['gstin'].present?
+        pan = billing_address['gstin'].gsub(/\s+/, "").squish.upcase[2..11]
+      elsif billing_address.present? && billing_address['pan'].present?
+        pan = billing_address['pan'].gsub(/\s+/, "").squish.upcase[2..11]
+      elsif destination_address.present? && destination_address['gstin'].present?
+        pan = destination_address['gstin'].gsub(/\s+/, "").squish.upcase[2..11]
+      end
+      pan
     end
   end
 end

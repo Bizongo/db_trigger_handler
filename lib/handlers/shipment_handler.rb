@@ -40,7 +40,7 @@ module ShipmentHandler
     def get_line_item_details data
       line_item_details = []
       data[:dispatch_plan_item_relations].each do |dpir|
-        product_details = dpir['product_details']
+        product_details = JSON.parse dpir['product_details']
         if [0,2].include? data[:dispatch_plan]['dispatch_mode']
           price_per_unit = product_details['order_price_per_unit']
           gst_percentage = product_details['order_item_gst']
@@ -48,7 +48,6 @@ module ShipmentHandler
           price_per_unit = product_details['price_per_unit']
           gst_percentage = product_details['child_item_gst']
         end
-        pp product_details
         line_item_details << {
             item_name: product_details['product_name'],
             hsn: product_details['hsn_number'],
@@ -59,7 +58,6 @@ module ShipmentHandler
             dispatch_plan_item_relation_id: dpir['id']
         }
       end
-      pp line_item_details
       line_item_details
     end
 
@@ -68,6 +66,7 @@ module ShipmentHandler
       if [0,2].include? data[:dispatch_plan]['dispatch_mode']
         address = data[:dispatch_plan]['buyer_company_snapshot']['billing_address']
       end
+      address = JSON.parse address
       {
           name: address['full_name'],
           company_name: address['company_name'],
@@ -84,8 +83,8 @@ module ShipmentHandler
     end
 
     def get_address_object data
-      pp data
-      address = {
+      data = JSON.parse data
+      {
           name: data['full_name'],
           company_name: data['company_name'],
           street_address: "#{data['street_address']} #{data['city']} - #{data['pincode']}",
@@ -96,8 +95,6 @@ module ShipmentHandler
           mobile: data['mobile_number'],
           state_code: data['gstin_state_code']
       }
-      pp address
-      address
     end
   end
 end

@@ -64,7 +64,8 @@ module ShipmentHandler
     def get_buyer_company_details data
       address = data[:dispatch_plan]['destination_address_snapshot']
       if [0,2].include? data[:dispatch_plan]['dispatch_mode']
-        address = data[:dispatch_plan]['buyer_company_snapshot']['billing_address']
+        buyer_company_snapshot = JSON.parse data[:dispatch_plan]['buyer_company_snapshot']
+        address = buyer_company_snapshot['billing_address']
       end
       address = JSON.parse address
       {

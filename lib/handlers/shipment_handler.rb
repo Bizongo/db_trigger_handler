@@ -58,10 +58,10 @@ module ShipmentHandler
         line_item_details << {
             item_name: product_details['product_name'],
             hsn: product_details['hsn_number'],
-            quantity: dpir['shipped_quantity'],
+            quantity: dpir['shipped_quantity'].to_f,
             price_per_unit: price_per_unit,
             tax_percentage: gst_percentage,
-            amount_without_tax: dpir['total_buyer_amount_without_tax'],
+            amount_without_tax: dpir['total_buyer_amount_without_tax'].to_f,
             dispatch_plan_item_relation_id: dpir['id']
         }
         @sku_codes << product_details['sku_code']

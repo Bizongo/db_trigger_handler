@@ -70,6 +70,7 @@ module ShipmentHandler
       @account_name = ""
       @entity_reference_number = ""
       @center_id = nil
+      @buyer_gstin_state_code = ""
       invoice_creation_data = {
         invoice_date: Date.today.strftime("%Y-%m-%d"),
         file: "",
@@ -128,6 +129,7 @@ module ShipmentHandler
         address = buyer_company_snapshot['billing_address']
       end
       @account_name = address['company_name']
+      @buyer_gstin_state_code = address['gstin_state_code']
       {
           name: address['full_name'],
           company_name: address['company_name'],
@@ -162,6 +164,12 @@ module ShipmentHandler
       }
     end
 
+    def get_if_igst_required data
+      seller_gstin_state_code = data[:transition_address]['gstin_state_code']
+      buyer_gstin_state_code = @buyer_gstin_state_code
+      return seller_gstin_state_code != buyer_gstin_state_code
+    end
+
     def get_address_object data
       data = JSON.parse data
       {
@@ -185,7 +193,8 @@ module ShipmentHandler
           stock_transfer: stock_transfer,
           international_shipment: data[:shipment]['international_shipment'],
           include_tax: product_details['include_tax'],
-          currency_symbol: product_details['currency']
+          currency_symbol: product_details['currency'],
+          invoice_using_igst: get_if_igst_required(data)
       }
     end
 

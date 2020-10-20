@@ -41,8 +41,10 @@ module DbTriggerHandler
             case event
             when 'shipment_create'
               ShipmentHandler.shipment_create_handler(@connection, data)
+            when 'shipment_cancelled'
+              ShipmentHandler.shipment_cancelled(@connection, data)
             when 'shipment_updated'
-              ShipmentHandler.shipment_create_handler(@connection, data)
+              ShipmentHandler.shipment_updated(@connection, data)
             end
           end
         end
@@ -58,7 +60,7 @@ module DbTriggerHandler
     end
 
     def notification_channels
-      %w[shipment_created shipment_updated dpir_updated trigger_failed]
+      %w[shipment_created shipment_cancelled shipment_updated dpir_updated trigger_failed]
     end
   end
 end

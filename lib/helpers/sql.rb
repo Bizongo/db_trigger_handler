@@ -30,7 +30,7 @@ module SQL
     def get_dispatch_plan_item_relations(connection, dispatch_plan_id)
       execute_query(connection,
                     "select * from supply_chain.dispatch_plan_item_relations"+
-                        " where dispatch_plan_id = #{dispatch_plan_id}").first
+                        " where shipped_quantity > 0.0 and dispatch_plan_id = #{dispatch_plan_id}").first
     end
 
     private

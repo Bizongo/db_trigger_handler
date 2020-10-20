@@ -78,6 +78,7 @@ module ShipmentHandler
         amount: data[:shipment]['total_buyer_invoice_amount'].to_f - data[:shipment]['total_buyer_service_charge'].to_f,
         line_item_details: get_line_item_details(data),
         buyer_details: get_buyer_company_details(data),
+        supplier_details: get_seller_comapny_details(data),
         account_name: @account_name,
         entity_reference_number: @entity_reference_number,
         centre_reference_id: @center_id,
@@ -146,11 +147,11 @@ module ShipmentHandler
       seller_company = data[:dispatch_plan]['seller_company_snapshot']
       seller_company = JSON.parse seller_company
       {
-          name: seller_company['name'],
-          company_name: seller_company['name'],
+          name: seller_company['seller_company_name'],
+          company_name: seller_company['seller_company_name'],
           gstin: data[:transition_address]['gstin'],
-          email_id: seller_company['primary_contact']['email'],
-          contact_number: seller_company['promary_contact']['mobile'],
+          email_id: seller_company['seller_primary_contact']['email'],
+          contact_number: seller_company['seller_primary_contact']['mobile'],
           address: {
               street_address: "#{data[:transition_address]['street_address']} #{data[:transition_address]['city']} - #{data[:transition_address]['pincode']}",
               pincode: data[:transition_address]['pincode'],

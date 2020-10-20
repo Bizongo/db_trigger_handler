@@ -36,6 +36,9 @@ module ShipmentHandler
       if shipment['status'] == 3
         update_invoice_data.merge!({status: 'CANCELLED'})
       end
+      if shipment['seller_due_data'].present?
+        update_invoice_data.merge!({due_date: shipment['seller_due_date'].strftime("%Y-%m-%d")})
+      end
       pp update_invoice_data
     end
 
@@ -44,7 +47,6 @@ module ShipmentHandler
     def update_invoice shipment
       {
           invoice_number: shipment['seller_invoice_number'],
-          due_date: shipment['seller_due_date'].strftime("%Y-%m-%d"),
           amount: shipment['total_seller_invoice_amount'].to_f - shipment['actual_charges'].to_f,
           delivery_amount: shipment['actual_charges'].to_f,
           extra_amount: shipment['seller_extra_charges'].to_f,

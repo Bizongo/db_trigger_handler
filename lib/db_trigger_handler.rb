@@ -39,7 +39,7 @@ module DbTriggerHandler
         loop do
           @connection.raw_connection.wait_for_notify do |event, id, data|
             case event
-            when 'shipment_create'
+            when 'shipment_created'
               ShipmentHandler.shipment_create_handler(@connection, data)
             when 'shipment_cancelled'
               ShipmentHandler.shipment_cancelled(@connection, data)

@@ -42,6 +42,7 @@ module ShipmentHandler
       if shipment['status'] == 3
         update_invoice_data.merge!({status: 'CANCELLED', buyer_invoice_id: shipment['buyer_invoice_id']})
       end
+      pp "Invoice Update"
       pp update_invoice_data
     end
 
@@ -86,6 +87,7 @@ module ShipmentHandler
         delivery_amount: data[:shipment]['total_buyer_service_charge'],
         shipment_id: data[:shipment]['id']
       }
+      pp "Invoice Creation"
       pp invoice_creation_data.to_json
     end
 

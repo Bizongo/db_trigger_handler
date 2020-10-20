@@ -143,8 +143,8 @@ module ShipmentHandler
 
     def get_pan data
       pan = ""
-      buyer_company_snapshot = JSON.parse data[:dispatch_plan]['buyer_company_snapshot']
-      destination_address = JSON.parse data[:dispatch_plan]['destination_address_snapshot']
+      buyer_company_snapshot = JSON.parse data['buyer_company_snapshot']
+      destination_address = JSON.parse data['destination_address_snapshot']
       account_id = buyer_company_snapshot['billing_address']['lead_plus_account_id']
       billing_address = buyer_company_snapshot['billing_address']
       if account_id.present? && @lead_plus_account_pan_mapping[account_id.to_i].present?

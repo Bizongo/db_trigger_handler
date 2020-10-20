@@ -32,12 +32,15 @@ module ShipmentHandler
     def shipment_updated(connection, data)
       parse_data = JSON.parse data
       shipment = SQL.get_shipment(connection, parse_data['id'])
-      update_invoice_data = update_invoice(shipment)
-      if shipment['status'] == 3
-        update_invoice_data.merge!({status: 'CANCELLED'})
+      update_invoice_data = {}
+      if shipment['seller_invoice_id'].present?
+        update_invoice_data = update_invoice(shipment)
+        if shipment['seller_due_data'].present?
+          update_invoice_data.merge!({due_date: shipment['seller_due_date'].strftime("%Y-%m-%d")})
+        end
       end
-      if shipment['seller_due_data'].present?
-        update_invoice_data.merge!({due_date: shipment['seller_due_date'].strftime("%Y-%m-%d")})
+      if shipment['status'] == 3
+        update_invoice_data.merge!({status: 'CANCELLED', buyer_invoice_id: shipment['buyer_invoice_id']})
       end
       pp update_invoice_data
     end
@@ -50,8 +53,7 @@ module ShipmentHandler
           amount: shipment['total_seller_invoice_amount'].to_f - shipment['actual_charges'].to_f,
           delivery_amount: shipment['actual_charges'].to_f,
           extra_amount: shipment['seller_extra_charges'].to_f,
-          seller_invoice_id: shipment['seller_invoice_id'],
-          buyer_invoice_id: shipment['buyer_invoice_id']
+          seller_invoice_id: shipment['seller_invoice_id']
       }
     end
 

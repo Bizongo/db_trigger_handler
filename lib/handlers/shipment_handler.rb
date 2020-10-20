@@ -28,7 +28,7 @@ module ShipmentHandler
         invoice_date: Date.today.strftime("%Y-%m-%d"),
         file: "",
         account_type: "BUYER",
-        pan: get_pan(data['dispatch_plan']),
+        pan: get_pan(data[:dispatch_plan]),
         amount: data[:shipment]['total_buyer_invoice_amount'].to_f - data[:shipment]['total_buyer_service_charge'].to_f,
         line_item_details: get_line_item_details(data),
         buyer_details: get_buyer_company_details(data),

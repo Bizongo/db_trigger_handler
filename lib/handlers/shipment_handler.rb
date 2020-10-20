@@ -41,7 +41,7 @@ module ShipmentHandler
       line_item_details = []
       data[:dispatch_plan_item_relations].each do |dpir|
         product_details = dpir['product_details']
-        if [0,2].include? data['dispatch_plan']['dispatch_mode']
+        if [0,2].include? data[:dispatch_plan]['dispatch_mode']
           price_per_unit = product_details['order_price_per_unit']
           gst_percentage = product_details['order_item_gst']
         else

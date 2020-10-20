@@ -34,7 +34,7 @@ module ShipmentHandler
         delivery_amount: data[:shipment]['total_buyer_service_charge'],
         shipment_id: data[:shipment]['id']
       }
-      pp "Invoice Create Data :- #{invoice_creation_data.inspect}"
+      pp invoice_creation_data.inspect
     end
 
     def get_line_item_details data
@@ -48,6 +48,7 @@ module ShipmentHandler
           price_per_unit = product_details['price_per_unit']
           gst_percentage = product_details['child_item_gst']
         end
+        pp product_details
         line_item_details << {
             item_name: product_details['product_name'],
             hsn: product_details['hsn_number'],
@@ -58,6 +59,7 @@ module ShipmentHandler
             dispatch_plan_item_relation_id: dpir['id']
         }
       end
+      pp line_item_details
       line_item_details
     end
 
@@ -82,7 +84,8 @@ module ShipmentHandler
     end
 
     def get_address_object data
-      {
+      pp data
+      address = {
           name: data['full_name'],
           company_name: data['company_name'],
           street_address: "#{data['street_address']} #{data['city']} - #{data['pincode']}",
@@ -93,6 +96,8 @@ module ShipmentHandler
           mobile: data['mobile_number'],
           state_code: data['gstin_state_code']
       }
+      pp address
+      address
     end
   end
 end

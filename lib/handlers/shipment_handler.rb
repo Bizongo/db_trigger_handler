@@ -25,21 +25,21 @@ module ShipmentHandler
         # account_name:,
         # pan: get_pan(data['dispatch_plan']),
         # centre_reference_id:,
-        amount: data['shipment']['total_buyer_invoice_amount'].to_f - data['shipment']['total_buyer_service_charge'].to_f,
+        amount: data[:shipment]['total_buyer_invoice_amount'].to_f - data[:shipment]['total_buyer_service_charge'].to_f,
         line_item_details: get_line_item_details(data),
         buyer_details: get_buyer_company_details(data),
-        ship_to_details: get_address_object(data['dispatch_plan']['destination_address_snapshot']),
-        dispatch_from_details: get_address_object(data['dispatch_plan']['origin_address_snapshot']),
+        ship_to_details: get_address_object(data[:dispatch_plan]['destination_address_snapshot']),
+        dispatch_from_details: get_address_object(data[:dispatch_plan]['origin_address_snapshot']),
         # supporting_document_details:,
-        delivery_amount: data['shipment']['total_buyer_service_charge'],
-        shipment_id: data['shipment']['id']
+        delivery_amount: data[:shipment]['total_buyer_service_charge'],
+        shipment_id: data[:shipment]['id']
       }
       pp "Invoice Create Data :- #{invoice_creation_data.inspect}"
     end
 
     def get_line_item_details data
       line_item_details = []
-      data['dispatch_plan_item_relations'].each do |dpir|
+      data[:dispatch_plan_item_relations].each do |dpir|
         product_details = dpir['product_details']
         if [0,2].include? data['dispatch_plan']['dispatch_mode']
           price_per_unit = product_details['order_price_per_unit']
@@ -62,9 +62,9 @@ module ShipmentHandler
     end
 
     def get_buyer_company_details data
-      address = data['dispatch_plan']['destination_address_snapshot']
-      if [0,2].include? data['dispatch_plan']['dispatch_mode']
-        address = data['dispatch_plan']['buyer_company_snapshot']['billing_address']
+      address = data[:dispatch_plan]['destination_address_snapshot']
+      if [0,2].include? data[:dispatch_plan]['dispatch_mode']
+        address = data[:dispatch_plan]['buyer_company_snapshot']['billing_address']
       end
       {
           name: address['full_name'],

@@ -13,7 +13,8 @@ module SQL
       {
           shipment: shipment,
           dispatch_plan: get_dispatch_plan(connection, shipment['dispatch_plan_id']),
-          dispatch_plan_item_relations: get_dispatch_plan_item_relations(connection, shipment['dispatch_plan_id'])
+          dispatch_plan_item_relations: get_dispatch_plan_item_relations(connection, shipment['dispatch_plan_id']),
+          transition_address: get_transition_address(connection, shipment['transition_address_id'])
       }
     end
 
@@ -31,6 +32,11 @@ module SQL
       execute_query(connection,
                     "select * from supply_chain.dispatch_plan_item_relations"+
                         " where shipped_quantity > 0.0 and dispatch_plan_id = #{dispatch_plan_id}").to_a
+    end
+
+    def get_transition_address(connection, id)
+      execute_query(connection,
+                    "select * from ums.addresses where id = #{id}").first
     end
 
     private

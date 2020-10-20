@@ -17,6 +17,7 @@ module ShipmentHandler
     private
 
     def create_invoice data
+      @sku_codes = []
       invoice_creation_data = {
         invoice_date: Date.today.strftime("%Y-%m-%d"),
         # entity_reference_number:,
@@ -30,7 +31,7 @@ module ShipmentHandler
         buyer_details: get_buyer_company_details(data),
         ship_to_details: get_address_object(data[:dispatch_plan]['destination_address_snapshot']),
         dispatch_from_details: get_address_object(data[:dispatch_plan]['origin_address_snapshot']),
-        # supporting_document_details:,
+        supporting_document_details: get_supporting_document_details(data),
         delivery_amount: data[:shipment]['total_buyer_service_charge'],
         shipment_id: data[:shipment]['id']
       }
@@ -57,6 +58,7 @@ module ShipmentHandler
             amount_without_tax: dpir['total_buyer_amount_without_tax'],
             dispatch_plan_item_relation_id: dpir['id']
         }
+        @sku_codes << product_details['sku_code']
       end
       line_item_details
     end
@@ -83,6 +85,25 @@ module ShipmentHandler
       }
     end
 
+    def get_seller_comapny_details data
+      seller_company = data[:dispatch_plan]['seller_company_snapshot']
+      seller_company = JSON.parse seller_company
+      {
+          name: seller_company['name'],
+          company_name: seller_company['name'],
+          gstin: data[:transition_address]['gstin'],
+          email_id: seller_company['primary_contact']['email'],
+          contact_number: seller_company['promary_contact']['mobile'],
+          address: {
+              street_address: "#{data[:transition_address]['street_address']} #{data[:transition_address]['city']} - #{data[:transition_address]['pincode']}",
+              pincode: data[:transition_address]['pincode'],
+              state: data[:transition_address]['state'],
+              country:  data[:transition_address]['country'],
+              state_code: data[:transition_address]['gstin_state_code']
+          }
+      }
+    end
+
     def get_address_object data
       data = JSON.parse data
       {
@@ -95,6 +116,18 @@ module ShipmentHandler
           gstin: data['gstin'],
           mobile: data['mobile_number'],
           state_code: data['gstin_state_code']
+      }
+    end
+
+    def get_supporting_document_details data
+      stock_transfer = [4].include? data[:dispatch_plan]['dispatch_mode']
+      product_details = JSON.parse data[:dispatch_plan_item_relations].first['product_details']
+      {
+          sku_codes: @sku_codes,
+          stock_transfer: stock_transfer,
+          international_shipment: data[:shipment]['international_shipment'],
+          include_tax: product_details['include_tax'],
+          currency_symbol: product_details['currency']
       }
     end
   end

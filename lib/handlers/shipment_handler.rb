@@ -1,7 +1,9 @@
 require 'helpers/sql'
+require 'helpers/kafka_helper'
 
 module ShipmentHandler
   include SQL
+  include KafkaHelper
 
   class << self
     @lead_plus_account_pan_mapping = {
@@ -13,7 +15,8 @@ module ShipmentHandler
       shipment_create_data = SQL.get_all_shipment_info(connection, parsed_data['id'])
       if [0,2,4].include? shipment_create_data[:dispatch_plan]['dispatch_mode']
         # Create Invoice For seller_to_buyer, warehouse_to_warehouse, warehouse_to_buyer
-        create_invoice shipment_create_data
+        KafkaHelper::Client.produce(message: create_invoice(shipment_create_data),
+                                    topic: "shipment_created")
       end
     end
 
@@ -91,6 +94,7 @@ module ShipmentHandler
       }
       pp "Invoice Creation"
       pp invoice_creation_data.to_json
+      invoice_creation_data
     end
 
     def get_line_item_details data

@@ -35,18 +35,27 @@ module ShipmentHandler
     def shipment_updated(connection, data)
       parse_data = JSON.parse data
       shipment = SQL.get_shipment(connection, parse_data['id'])
-      update_invoice_data = {}
-      if shipment['seller_invoice_id'].present?
-        update_invoice_data = update_invoice(shipment)
-        if shipment['seller_due_data'].present?
-          update_invoice_data.merge!({due_date: shipment['seller_due_date'].strftime("%Y-%m-%d")})
-        end
-      end
-      if shipment['status'] == 3
-        update_invoice_data.merge!({status: 'CANCELLED', buyer_invoice_id: shipment['buyer_invoice_id']})
-      end
       pp "Invoice Update"
-      pp update_invoice_data
+      if shipment['status'] == 3
+        if shipment['seller_invoice_id'].present?
+          update_invoice_data = {status: 'CANCELLED', id: shipment['seller_invoice_id']}
+          pp update_invoice_data
+          KafkaHelper::Client.produce(message: update_invoice_data, topic: "shipment_updated")
+        end
+        if shipment['buyer_invoice_id'].present?
+          update_invoice_data = {status: 'CANCELLED', id: shipment['buyer_invoice_id']}
+          pp update_invoice_data
+          KafkaHelper::Client.produce(message: update_invoice_data, topic: "shipment_updated")
+        end
+      else
+        if shipment['seller_invoice_id'].present?
+          update_invoice_data = update_invoice(shipment)
+          if shipment['seller_due_data'].present?
+            update_invoice_data.merge!({due_date: shipment['seller_due_date'].strftime("%Y-%m-%d")})
+          end
+        end
+        KafkaHelper::Client.produce(message: update_invoice_data, topic: "shipment_updated")
+      end
     end
 
     private
@@ -57,7 +66,7 @@ module ShipmentHandler
           amount: shipment['total_seller_invoice_amount'].to_f - shipment['actual_charges'].to_f,
           delivery_amount: shipment['actual_charges'].to_f,
           extra_amount: shipment['seller_extra_charges'].to_f,
-          seller_invoice_id: shipment['seller_invoice_id']
+          id: shipment['seller_invoice_id']
       }
     end
 

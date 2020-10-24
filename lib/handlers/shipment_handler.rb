@@ -23,11 +23,10 @@ module ShipmentHandler
         message = create_invoice(shipment_create_data)
         message.merge!({
           invoice_id_for_note: forward_shipment['buyer_invoice_id'],
-          type: 'CREDIT_NOTE'
+          type: 'CREDIT_NOTE',
+          buyer_details: message[:seller_details],
+          seller_details: message[:buyer_details]
         })
-        buyer_details = message['buyer_details']
-        message['buyer_details'] = message['seller_details']
-        message['seller_details'] = buyer_details
         KafkaHelper::Client.produce(message: message, topic: "shipment_created")
       end
     end
@@ -119,7 +118,7 @@ module ShipmentHandler
       line_item_details = []
       data[:dispatch_plan_item_relations].each do |dpir|
         product_details = JSON.parse dpir['product_details']
-        if [0,2].include? data[:dispatch_plan]['dispatch_mode']
+        if [0,2,3,6].include? data[:dispatch_plan]['dispatch_mode']
           price_per_unit = product_details['order_price_per_unit']
           gst_percentage = product_details['order_item_gst']
         else
@@ -144,7 +143,7 @@ module ShipmentHandler
       address = data[:dispatch_plan]['destination_address_snapshot']
       address = JSON.parse address
       @center_id = address['center_id']
-      if [0,2].include? data[:dispatch_plan]['dispatch_mode']
+      if [0,2,3,6].include? data[:dispatch_plan]['dispatch_mode']
         buyer_company_snapshot = JSON.parse data[:dispatch_plan]['buyer_company_snapshot']
         @entity_reference_number = buyer_company_snapshot['purchase_order_no']
         @center_id = buyer_company_snapshot['center_id']

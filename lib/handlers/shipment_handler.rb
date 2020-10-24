@@ -21,6 +21,7 @@ module ShipmentHandler
         # Create Invoice for buyer_to_warehouse, buyer_to_seller
         forward_shipment = SQL.get_shipment(connection, shipment_create_data[:shipment]['forward_shipment_id']);
         message = create_invoice(shipment_create_data)
+        pp message
         message.merge!({
           invoice_id_for_note: forward_shipment['buyer_invoice_id'],
           type: 'CREDIT_NOTE',

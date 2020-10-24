@@ -17,6 +17,17 @@ module ShipmentHandler
         # Create Invoice For seller_to_buyer, warehouse_to_warehouse, warehouse_to_buyer
         KafkaHelper::Client.produce(message: create_invoice(shipment_create_data),
                                     topic: "shipment_created")
+      elsif [3,6].include? shipment_create_data[:dispatch_plan]['dispatch_mode']
+        # Create Invoice for buyer_to_warehouse, buyer_to_seller
+        message = create_invoice(shipment_create_data)
+        message.merge!({
+          invoice_id_for_note: shipment_create_data[:shipment]['buyer_invoice_id'],
+          type: 'CREDIT_NOTE'
+        })
+        buyer_details = message[:buyer_details]
+        message[:buyer_details] = message[:seller_details]
+        message[:seller_details] = buyer_details
+        KafkaHelper::Client.produce(message: message, topic: "shipment_created")
       end
     end
 

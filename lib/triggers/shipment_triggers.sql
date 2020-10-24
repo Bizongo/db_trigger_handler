@@ -29,7 +29,7 @@ BEGIN
    or OLD.total_buyer_invoice_amount IS DISTINCT FROM NEW.total_buyer_invoice_amount
    or OLD.seller_extra_charges IS DISTINCT FROM NEW.seller_extra_charges
    or OLD.seller_invoice_no IS DISTINCT FROM NEW.seller_invoice_no
-   or OLD.status IS DISTINCT FROM NEW.status)
+   or (OLD.status IS DISTINCT FROM NEW.status and NEW.status = 3))
   THEN
     channel := 'shipment_updated';
     notify_data := json_build_object('id', NEW.id);

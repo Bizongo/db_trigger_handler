@@ -25,8 +25,8 @@ module ShipmentHandler
         message.merge!({
           invoice_id_for_note: forward_shipment['buyer_invoice_id'],
           type: 'CREDIT_NOTE',
-          buyer_details: message[:seller_details],
-          seller_details: message[:buyer_details]
+          buyer_details: message[:supplier_details],
+          supplier_details: message[:buyer_details]
         })
         KafkaHelper::Client.produce(message: message, topic: "shipment_created")
       end

@@ -15,6 +15,7 @@ module KafkaHelper
 
     def self.produce(message:, topic:)
       pp "Producing Message"
+      pp message.to_json
       kafka_producer = client.producer
       kafka_producer.produce(message.to_json, topic: topic)
       kafka_producer.deliver_messages

@@ -50,12 +50,10 @@ module ShipmentHandler
       if shipment['status'] == 3
         if shipment['seller_invoice_id'].present?
           update_invoice_data = {status: 'CANCELLED', id: shipment['seller_invoice_id']}
-          pp update_invoice_data
           KafkaHelper::Client.produce(message: update_invoice_data, topic: "shipment_updated")
         end
         if shipment['buyer_invoice_id'].present?
           update_invoice_data = {status: 'CANCELLED', id: shipment['buyer_invoice_id']}
-          pp update_invoice_data
           KafkaHelper::Client.produce(message: update_invoice_data, topic: "shipment_updated")
         end
       else
@@ -113,7 +111,6 @@ module ShipmentHandler
         shipment_id: data[:shipment]['id']
       }
       pp "Invoice Creation"
-      pp invoice_creation_data.to_json
       invoice_creation_data
     end
 

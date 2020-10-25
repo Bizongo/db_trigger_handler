@@ -180,7 +180,7 @@ module DpirHandler
 
     def get_supporting_document_details data
       stock_transfer = [4].include? data[:dispatch_plan]['dispatch_mode']
-      product_details = JSON.parse data[:dispatch_plan_item_relations].first['product_details']
+      product_details = JSON.parse data[:dispatch_plan_item_relation]['product_details']
       {
           sku_codes: @sku_codes,
           stock_transfer: stock_transfer,

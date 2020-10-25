@@ -23,6 +23,10 @@ module DpirHandler
           returned_quantity_change(dpir_update_data, parsed_data['old'].to_f)
         when 'LOST_QUANTITY_CHANGE'
           lost_quantity_change(dpir_update_data, parsed_data['old'].to_f)
+        when 'PRICE_PER_UNIT_CHANGE'
+          price_per_unit_change(dpir_update_data, parsed_data['old'].to_f)
+        when 'GST_CHANGE'
+          gst_percentage_change(dpir_update_data, parsed_data['old'].to_f)
         end
       end
     end
@@ -41,6 +45,10 @@ module DpirHandler
         quantity = (dpir['returned_quantity'].to_f-old.to_f).abs
       when 'LOST_QUANTITY_CHANGE'
         quantity = (dpir['lost_quantity'].to_f-old.to_f).abs
+      when 'PRICE_PER_UNIT_CHANGE'
+        price_per_unit = (price_per_unit.to_f-old.to_f).abs
+      when 'GST_CHANGE'
+        gst_percentage = (gst_percentage.to_f-old.to_f).abs
       end
       amount_without_tax = quantity.to_f * price_per_unit.to_f
       @amount = quantity * price_per_unit * (1+(gst_percentage/100))
@@ -79,10 +87,20 @@ module DpirHandler
       pp creation_data
     end
 
-    def price_per_unit_change
+    def price_per_unit_change(dpir_update_data, old_ppu)
+      creation_data = common_create_invoice_data(dpir_update_data, old_ppu)
+                          .merge!({
+                                      type: @note_type
+                                  })
+      pp creation_data
     end
 
-    def gst_percentage_change
+    def gst_percentage_change(dpir_update_data, old_gst)
+      creation_data = common_create_invoice_data(dpir_update_data, old_gst)
+                          .merge!({
+        type: @note_type
+      })
+      pp creation_data
     end
 
     def common_create_invoice_data(data, old)

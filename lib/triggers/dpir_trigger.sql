@@ -26,6 +26,23 @@ BEGIN
             notify_data := json_build_object('id', NEW.id, 'old', OLD.lost_quantity, 'type', 'LOST_QUANTITY_CHANGE');
             PERFORM pg_notify(channel, notify_data::text);
             RETURN NEW;
+            RETURN NEW;
+        ELSIF OLD.product_details <> '{}'::jsonb and NEW.product_details <> '{}'::jsonb
+        THEN
+            IF OLD.product_details->>'order_price_per_unit' is not NULL and OLD.product_details->>'order_price_per_unit' is DISTINCT FROM NEW.product_details->>'order_price_per_unit'
+            THEN
+                channel := 'dpir_updated';
+                notify_data := json_build_object('id', NEW.id, 'old', OLD.product_details->>'order_price_per_unit', 'type', 'PRICE_PER_UNIT_CHANGE');
+                PERFORM pg_notify(channel, notify_data::text);
+                RETURN NEW;
+            END IF;
+            IF OLD.product_details->>'order_item_gst' is not NULL and OLD.product_details->>'order_item_gst' is DISTINCT FROM NEW.product_details->>'order_item_gst'
+            THEN
+                channel := 'dpir_updated';
+                notify_data := json_build_object('id', NEW.id, 'old', OLD.product_details->>'order_item_gst', 'type', 'GST_CHANGE');
+                PERFORM pg_notify(channel, notify_data::text);
+                RETURN NEW;
+            END IF;
         END IF;
     END IF;
 END;

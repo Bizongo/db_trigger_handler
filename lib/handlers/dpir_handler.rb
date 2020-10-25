@@ -13,7 +13,7 @@ module DpirHandler
     def handle_dpir_change(connection, data)
       parsed_data = JSON.parse data
       dpir_update_data = SQL.get_all_dpir_info(connection, parsed_data['id'])
-      if [0,2].include? data[:dispatch_plan]['dispatch_mode']
+      if [0,2].include? dpir_update_data[:dispatch_plan]['dispatch_mode']
         @note_type = 'CREDIT_NOTE'
         @type = parsed_data['type']
         case parsed_data['type']

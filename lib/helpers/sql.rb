@@ -28,9 +28,24 @@ module SQL
       }
     end
 
+    def get_all_dpir_info(connection, id)
+      dpir = get_dispatch_plan_item_relation(connection, id)
+      {
+          dispatch_plan: get_dispatch_plan(connection, dpir['dispatch_plan_id']),
+          shipment: get_shipment_from_dp(connection, dpir['dispatch_plan_id']),
+          dispatch_plan_item_relation: dpir
+      }
+    end
+
     def get_shipment(connection, id)
       execute_query(connection,
                     "select * from supply_chain.shipments where id = #{id}").first
+    end
+
+    def get_shipment_from_dp(connection, dispatch_plan_id)
+      execute_query(connection,
+                    "select * from supply_chain.shipments"+
+                        " dispatch_plan_id = #{dispatch_plan_id}").to_a
     end
 
     def get_dispatch_plan(connection, id)
@@ -42,6 +57,11 @@ module SQL
       execute_query(connection,
                     "select * from supply_chain.dispatch_plan_item_relations"+
                         " where shipped_quantity > 0.0 and dispatch_plan_id = #{dispatch_plan_id}").to_a
+    end
+
+    def get_dispatch_plan_item_relation(connection, id)
+      execute_query(connection,
+                    "select * from supply_chain.dispatch_plan_item_relations where id = #{id}").first
     end
 
     def get_lost_dispatch_plan_item_relations(connection, dispatch_plan_id)

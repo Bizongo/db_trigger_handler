@@ -36,11 +36,11 @@ module DpirHandler
       quantity = dpir['shipped_quantity']
       case @type
       when 'SHIPPED_QUANTITY_CHANGE'
-        quantity = Math.abs(dpir['shipped_quantity'].to_f-old.to_f)
+        quantity = (dpir['shipped_quantity'].to_f-old.to_f).abs
       when 'RETURNED_QUANTITY_CHANGE'
-        quantity = Math.abs(dpir['returned_quantity'].to_f-old.to_f)
+        quantity = (dpir['returned_quantity'].to_f-old.to_f).abs
       when 'LOST_QUANTITY_CHANGE'
-        quantity = Math.abs(dpir['lost_quantity'].to_f-old.to_f)
+        quantity = (dpir['lost_quantity'].to_f-old.to_f).abs
       end
       amount_without_tax = quantity.to_f * price_per_unit.to_f
       @amount = quantity * price_per_unit * (1+(gst_percentage/100))

@@ -45,6 +45,8 @@ module DbTriggerHandler
               ShipmentHandler.shipment_cancelled(@connection, data)
             when 'shipment_updated'
               ShipmentHandler.shipment_updated(@connection, data)
+            when 'shipment_dpir_changed'
+              ShipmentHandler.shipment_dpir_transaction_handler(@connection, data)
             end
           end
         end
@@ -60,7 +62,7 @@ module DbTriggerHandler
     end
 
     def notification_channels
-      %w[shipment_created shipment_cancelled shipment_updated dpir_updated trigger_failed]
+      %w[shipment_created shipment_dpir_changed shipment_cancelled shipment_updated dpir_updated trigger_failed]
     end
   end
 end

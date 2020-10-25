@@ -35,6 +35,14 @@ BEGIN
     notify_data := json_build_object('id', NEW.id);
     PERFORM pg_notify(channel, notify_data::text);
     RETURN NEW;
+  ELSIF TG_OP ilike('UPDATE') and
+  (OLD.items_change_snapshot <> '"{}"' and
+  OLD.items_change_snapshot IS DISTINCT FROM NEW.items_change_snapshot)
+  THEN
+    channel := 'shipment_dpir_changed';
+    notify_data := json_build_object('id', NEW.id);
+    PERFORM pg_notify(channel, notify_data::text);
+    RETURN NEW;
   ELSIF TG_OP ilike('DELETE')
   THEN
     channel := 'shipment_cancelled';

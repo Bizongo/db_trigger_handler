@@ -21,9 +21,21 @@ module ShipmentHandler
         # Create Invoice for buyer_to_warehouse, buyer_to_seller
         forward_shipment = SQL.get_shipment(connection, shipment_create_data[:shipment]['forward_shipment_id']);
         message = create_invoice(shipment_create_data)
-        pp message
         message.merge!({
           invoice_id_for_note: forward_shipment['buyer_invoice_id'],
+          type: 'CREDIT_NOTE'
+        })
+        KafkaHelper::Client.produce(message: message, topic: "shipment_created")
+      end
+    end
+
+    def shipment_dpir_transaction_handler(connection, data)
+      parsed_data = JSON.parse data
+      shipment_lost_data = SQL.get_lost_shipment_info(connection, parsed_data['id'])
+      if [0,2,4].include? shipment_lost_data[:dispatch_plan]['dispatch_mode']
+        message = create_lost_shipment_credit_note(shipment_lost_data)
+        message.merge!({
+          invoice_id_for_note: shipment_lost_data[:shipment]['buyer_invoice_id'],
           type: 'CREDIT_NOTE'
         })
         KafkaHelper::Client.produce(message: message, topic: "shipment_created")
@@ -85,35 +97,50 @@ module ShipmentHandler
       }
     end
 
-    def create_invoice data
+    def common_create_invoice_data data
       @sku_codes = []
       @account_name = ""
       @entity_reference_number = ""
       @center_id = nil
       @buyer_gstin_state_code = ""
-      invoice_creation_data = {
-        invoice_date: Date.today.strftime("%Y-%m-%d"),
-        file: "",
-        account_type: "BUYER",
-        pan: get_pan(data[:dispatch_plan]),
+      @amount = 0
+      {
+          invoice_date: Date.today.strftime("%Y-%m-%d"),
+          file: "",
+          account_type: "BUYER",
+          pan: get_pan(data[:dispatch_plan]),
+          buyer_details: get_buyer_company_details(data),
+          supplier_details: get_seller_comapny_details(data),
+          account_name: @account_name,
+          entity_reference_number: @entity_reference_number,
+          centre_reference_id: @center_id,
+          ship_to_details: get_address_object(data[:dispatch_plan]['destination_address_snapshot']),
+          dispatch_from_details: get_address_object(data[:dispatch_plan]['origin_address_snapshot']),
+          supporting_document_details: get_supporting_document_details(data),
+          shipment_id: data[:shipment]['id']
+      }
+    end
+
+    def create_invoice data
+      invoice_creation_data = common_create_invoice_data(data).merge!({
         amount: data[:shipment]['total_buyer_invoice_amount'].to_f - data[:shipment]['total_buyer_service_charge'].to_f,
         line_item_details: get_line_item_details(data),
-        buyer_details: get_buyer_company_details(data),
-        supplier_details: get_seller_comapny_details(data),
-        account_name: @account_name,
-        entity_reference_number: @entity_reference_number,
-        centre_reference_id: @center_id,
-        ship_to_details: get_address_object(data[:dispatch_plan]['destination_address_snapshot']),
-        dispatch_from_details: get_address_object(data[:dispatch_plan]['origin_address_snapshot']),
-        supporting_document_details: get_supporting_document_details(data),
-        delivery_amount: data[:shipment]['total_buyer_service_charge'],
-        shipment_id: data[:shipment]['id']
-      }
+        delivery_amount: data[:shipment]['total_buyer_service_charge']
+      })
       pp "Invoice Creation"
       invoice_creation_data
     end
 
-    def get_line_item_details data
+    def create_lost_shipment_credit_note data
+      invoice_creation_data = common_create_invoice_data(data).merge!({
+        line_item_details: get_line_item_details(data, true),
+        amount: @amount
+      })
+      pp "Invoice Creation"
+      invoice_creation_data
+    end
+
+    def get_line_item_details(data, is_lost = false)
       line_item_details = []
       data[:dispatch_plan_item_relations].each do |dpir|
         product_details = JSON.parse dpir['product_details']
@@ -124,15 +151,18 @@ module ShipmentHandler
           price_per_unit = product_details['price_per_unit']
           gst_percentage = product_details['child_item_gst']
         end
+        quantity = is_lost ? dpir['lost_quantity'].to_f : dpir['shipped_quantity'].to_f
+        amount_without_tax = quantity.to_f * price_per_unit.to_f
         line_item_details << {
             item_name: product_details['product_name'],
             hsn: product_details['hsn_number'],
-            quantity: dpir['shipped_quantity'].to_f,
+            quantity: quantity,
             price_per_unit: price_per_unit,
             tax_percentage: gst_percentage,
-            amount_without_tax: dpir['total_buyer_amount_without_tax'].to_f,
+            amount_without_tax:amount_without_tax.to_f,
             dispatch_plan_item_relation_id: dpir['id']
         }
+        @amount += quantity * price_per_unit * (1+(gst_percentage/100))
         @sku_codes << product_details['sku_code']
       end
       line_item_details

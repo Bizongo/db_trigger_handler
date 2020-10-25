@@ -47,7 +47,7 @@ module SQL
     def get_shipment_from_dp(connection, dispatch_plan_id)
       execute_query(connection,
                     "select * from supply_chain.shipments"+
-                        " where dispatch_plan_id = #{dispatch_plan_id}").to_a
+                        " where dispatch_plan_id = #{dispatch_plan_id}").first
     end
 
     def get_dispatch_plan(connection, id)

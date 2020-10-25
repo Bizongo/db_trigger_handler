@@ -30,10 +30,12 @@ module SQL
 
     def get_all_dpir_info(connection, id)
       dpir = get_dispatch_plan_item_relation(connection, id)
+      shipment = get_shipment_from_dp(connection, dpir['dispatch_plan_id'])
       {
           dispatch_plan: get_dispatch_plan(connection, dpir['dispatch_plan_id']),
-          shipment: get_shipment_from_dp(connection, dpir['dispatch_plan_id']),
-          dispatch_plan_item_relation: dpir
+          shipment: shipment,
+          dispatch_plan_item_relation: dpir,
+          transition_address: get_transition_address(connection, shipment['transition_address_id'])
       }
     end
 

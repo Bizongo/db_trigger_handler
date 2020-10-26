@@ -62,6 +62,12 @@ module DpirHandler
       }]
     end
 
+    def get_if_igst_required data
+      seller_gstin_state_code = data[:transition_address]['gstin_state_code']
+      buyer_gstin_state_code = @buyer_gstin_state_code
+      return seller_gstin_state_code != buyer_gstin_state_code
+    end
+
     def get_supporting_document_details data
       stock_transfer = [4].include? data[:dispatch_plan]['dispatch_mode']
       product_details = JSON.parse data[:dispatch_plan_item_relation]['product_details']

@@ -117,6 +117,8 @@ module ShipmentHandler
     end
 
     def get_line_item_details(data, is_lost = false)
+      @amount = 0
+      @sku_codes = []
       line_item_details = []
       data[:dispatch_plan_item_relations].each do |dpir|
         product_details = JSON.parse dpir['product_details']

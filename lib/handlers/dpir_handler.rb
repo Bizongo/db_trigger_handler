@@ -28,7 +28,7 @@ module DpirHandler
         line_item_details: get_line_item_details(data[:dispatch_plan_item_relation], old),
         amount: @amount,
         type: @note_type,
-        supporting_document_details: get_supporting_document_details data
+        supporting_document_details: get_supporting_document_details(data)
       })
     end
 

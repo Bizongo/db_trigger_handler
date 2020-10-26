@@ -21,8 +21,7 @@ module ShipmentHandler
         message = create_invoice(shipment_create_data)
         message.merge!({
           invoice_id_for_note: forward_shipment['buyer_invoice_id'],
-          type: 'CREDIT_NOTE',
-          supporting_document_details: get_supporting_document_details(shipment_create_data),
+          type: 'CREDIT_NOTE'
         })
         KafkaHelper::Client.produce(message: message, topic: "shipment_created")
       end
@@ -102,7 +101,7 @@ module ShipmentHandler
         amount: data[:shipment]['total_buyer_invoice_amount'].to_f - data[:shipment]['total_buyer_service_charge'].to_f,
         line_item_details: get_line_item_details(data),
         delivery_amount: data[:shipment]['total_buyer_service_charge'],
-        supporting_document_details: get_supporting_document_details(invoice_creation_data),
+        supporting_document_details: get_supporting_document_details(data),
       })
       invoice_creation_data
     end

@@ -8,19 +8,19 @@ DECLARE
 BEGIN
     IF TG_OP ilike('UPDATE')
     THEN
-        IF OLD.shipped_quantity is not NULL and OLD.shipped_quantity is DISTINCT FROM NEW.shipped_quantity
+        IF OLD.shipped_quantity is not NULL and OLD.shipped_quantity != 0 and OLD.shipped_quantity is DISTINCT FROM NEW.shipped_quantity
         THEN
             channel := 'dpir_updated';
             notify_data := json_build_object('id', NEW.id, 'old', OLD.shipped_quantity, 'type', 'SHIPPED_QUANTITY_CHANGE');
             PERFORM pg_notify(channel, notify_data::text);
             RETURN NEW;
-        ELSIF OLD.returned_quantity is not NULL and OLD.returned_quantity is DISTINCT FROM NEW.returned_quantity
+        ELSIF OLD.returned_quantity  is not NULL and OLD.returned_quantity != 0 and OLD.returned_quantity is DISTINCT FROM NEW.returned_quantity
         THEN
             channel := 'dpir_updated';
             notify_data := json_build_object('id', NEW.id, 'old', OLD.returned_quantity, 'type', 'RETURNED_QUANTITY_CHANGE');
             PERFORM pg_notify(channel, notify_data::text);
             RETURN NEW;
-        ELSIF OLD.lost_quantity is not NULL and OLD.lost_quantity is DISTINCT FROM NEW.lost_quantity
+        ELSIF OLD.lost_quantity is not NULL and OLD.lost_quantity != 0 and OLD.lost_quantity is DISTINCT FROM NEW.lost_quantity
         THEN
             channel := 'dpir_updated';
             notify_data := json_build_object('id', NEW.id, 'old', OLD.lost_quantity, 'type', 'LOST_QUANTITY_CHANGE');
@@ -45,6 +45,7 @@ BEGIN
             END IF;
         END IF;
     END IF;
+    return NEW;
 END;
 $$
 LANGUAGE 'plpgsql';

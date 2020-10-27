@@ -17,8 +17,7 @@ module DpirHandler
         @type = parsed_data['type']
         common_data = InvoiceCreationHelper.common_create_invoice_data dpir_update_data
         creation_data = add_information(dpir_update_data, common_data, parsed_data['old'])
-        pp "dpir changed"
-        pp creation_data.to_json
+        KafkaHelper::Client.produce(message: creation_data, topic: 'shipment_created')
       end
     end
 
@@ -56,12 +55,12 @@ module DpirHandler
         price_per_unit = (price_per_unit.to_f-old.to_f).abs
         ppu_difference = price_per_unit
         get_note_type(price_per_unit, old)
-        @note_sub_type = 'RATE_CHANGE_SYSTEM'
+        @note_sub_type = '_RATE_CHANGE_SYSTEM'
       when 'GST_CHANGE'
         gst_percentage = (gst_percentage.to_f-old.to_f).abs
         gst_difference = gst_difference
         get_note_type(gst_percentage, old)
-        @note_sub_type = 'TAX_CHANGE_SYSTEM'
+        @note_sub_type = '_TAX_CHANGE_SYSTEM'
       end
       amount_without_tax = quantity.to_f * price_per_unit.to_f
       @amount = quantity * price_per_unit * (1+(gst_percentage/100))
@@ -92,6 +91,19 @@ module DpirHandler
       return seller_gstin_state_code != buyer_gstin_state_code
     end
 
+    def get_comment
+      case @note_sub_type
+      when ''
+        return ''
+      when  '_RATE_CHANGE_SYSTEM'
+        return 'Rate change for product'
+      when '_TAX_CHANGE_SYSTEM'
+        return 'Tax changed for product'
+      else
+        return ''
+      end
+    end
+
     def get_supporting_document_details data
       stock_transfer = [4].include? data[:dispatch_plan]['dispatch_mode']
       product_details = JSON.parse data[:dispatch_plan_item_relation]['product_details']
@@ -101,7 +113,8 @@ module DpirHandler
           international_shipment: data[:shipment]['international_shipment'],
           include_tax: product_details['include_tax'],
           currency_symbol: product_details['currency'],
-          invoice_using_igst: get_if_igst_required(data)
+          invoice_using_igst: get_if_igst_required(data),
+          comment: get_comment
       }
     end
   end

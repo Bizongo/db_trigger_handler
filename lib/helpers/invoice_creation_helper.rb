@@ -57,7 +57,7 @@ module InvoiceCreationHelper
 
     def get_seller_comapny_details data
       seller_company = data[:dispatch_plan]['seller_company_snapshot']
-      destination_address = data[:dispatch_plan]['origin_address_snapshot']
+      destination_address = JSON.parse data[:dispatch_plan]['origin_address_snapshot']
       seller_company = JSON.parse seller_company
       seller_details = {
           name: seller_company['seller_company_name'].presence || destination_address['full_name'],

@@ -57,10 +57,11 @@ module InvoiceCreationHelper
 
     def get_seller_comapny_details data
       seller_company = data[:dispatch_plan]['seller_company_snapshot']
+      destination_address = data[:dispatch_plan]['origin_address_snapshot']
       seller_company = JSON.parse seller_company
       seller_details = {
-          name: seller_company['seller_company_name'],
-          company_name: seller_company['seller_company_name'],
+          name: seller_company['seller_company_name'].presence || destination_address['full_name'],
+          company_name: seller_company['seller_company_name'].presence || destination_address['company_name'],
           gstin: data[:transition_address]['gstin'],
           address: {
               street_address: "#{data[:transition_address]['street_address']} #{data[:transition_address]['city']} - #{data[:transition_address]['pincode']}",
@@ -70,10 +71,6 @@ module InvoiceCreationHelper
               state_code: data[:transition_address]['gstin_state_code']
           }
       }
-      seller_details.merge!({
-        email_id: seller_company['seller_primary_contact']['email'],
-        contact_number: seller_company['seller_primary_contact']['mobile']
-      }) if seller_company['seller_primary_contact'].present?
       seller_details
     end
 

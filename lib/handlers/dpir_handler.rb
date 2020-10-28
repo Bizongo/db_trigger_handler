@@ -52,14 +52,16 @@ module DpirHandler
         quantity = (dpir['lost_quantity'].to_f-old.to_f).abs
         get_note_type(old, dpir['lost_quantity'])
       when 'PRICE_PER_UNIT_CHANGE'
+        new_price_per_unit = price_per_unit.to_f
         price_per_unit = (price_per_unit.to_f-old.to_f).abs
         ppu_difference = price_per_unit
-        get_note_type(price_per_unit, old)
+        get_note_type(new_price_per_unit, old)
         @note_sub_type = '_RATE_CHANGE_SYSTEM'
       when 'GST_CHANGE'
+        new_gst_percentage = gst_percentage.to_f
         gst_percentage = (gst_percentage.to_f-old.to_f).abs
         gst_difference = gst_difference
-        get_note_type(gst_percentage, old)
+        get_note_type(new_gst_percentage, old)
         @note_sub_type = '_TAX_CHANGE_SYSTEM'
       end
       amount_without_tax = quantity.to_f * price_per_unit.to_f

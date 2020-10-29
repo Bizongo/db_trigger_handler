@@ -13,7 +13,7 @@ module DbTriggerHandler
     def init(active_record_base)
       return if active_record_base.blank?
       @active_record_base = active_record_base
-      @logger = Logger.new("log/db_trigger.logs")
+      @logger = Logger.new("log/db_trigger.log")
       execute
     end
 

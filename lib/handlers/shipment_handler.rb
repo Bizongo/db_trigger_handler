@@ -8,13 +8,13 @@ module ShipmentHandler
   include InvoiceCreationHelper
 
   class << self
-    def shipment_create_handler(connection, data)
+    def shipment_create_handler(connection, data, logger)
       parsed_data = JSON.parse data
       shipment_create_data = SQL.get_all_shipment_info(connection, parsed_data['id'])
       if [0,2,4].include? shipment_create_data[:dispatch_plan]['dispatch_mode']
         # Create Invoice For seller_to_buyer, warehouse_to_warehouse, warehouse_to_buyer
         KafkaHelper::Client.produce(message: create_invoice(shipment_create_data),
-                                    topic: "shipment_created")
+                                    topic: "shipment_created", logger: logger)
       elsif [3,6].include? shipment_create_data[:dispatch_plan]['dispatch_mode']
         # Create Invoice for buyer_to_warehouse, buyer_to_seller
         forward_shipment = SQL.get_shipment(connection, shipment_create_data[:shipment]['forward_shipment_id']);
@@ -23,11 +23,11 @@ module ShipmentHandler
           invoice_id_for_note: forward_shipment['buyer_invoice_id'],
           type: 'CREDIT_NOTE'
         })
-        KafkaHelper::Client.produce(message: message, topic: "shipment_created")
+        KafkaHelper::Client.produce(message: message, topic: "shipment_created", logger: logger)
       end
     end
 
-    def shipment_dpir_transaction_handler(connection, data)
+    def shipment_dpir_transaction_handler(connection, data, logger)
       parsed_data = JSON.parse data
       shipment_lost_data = SQL.get_lost_shipment_info(connection, parsed_data['id'])
       if [0,2,4].include? shipment_lost_data[:dispatch_plan]['dispatch_mode']
@@ -37,33 +37,21 @@ module ShipmentHandler
           supporting_document_details: get_supporting_document_details(shipment_lost_data),
           type: 'CREDIT_NOTE'
         })
-        KafkaHelper::Client.produce(message: message, topic: "shipment_created")
+        KafkaHelper::Client.produce(message: message, topic: "shipment_created", logger: logger)
       end
     end
 
-    def shipment_cancelled(connection, data)
-      parse_data = JSON.parse data
-      shipment = SQL.get_shipment(connection, parse_data['id'])
-      # Cancel Invoice if shipment is cancelled or deleted
-      if shipment['buyer_invoice_id'].present?
-        pp cancel_invoice(shipment['buyer_invoice_id'])
-      end
-      if shipment['seller_invoice_id'].present?
-        pp cancel_invoice(shipment['seller_invoice_id'])
-      end
-    end
-
-    def shipment_updated(connection, data)
+    def shipment_updated(connection, data, logger)
       parse_data = JSON.parse data
       shipment = SQL.get_shipment(connection, parse_data['id'])
       if shipment['status'] == 3
         if shipment['seller_invoice_id'].present?
           update_invoice_data = {status: 'CANCELLED', id: shipment['seller_invoice_id']}
-          KafkaHelper::Client.produce(message: update_invoice_data, topic: "shipment_updated")
+          KafkaHelper::Client.produce(message: update_invoice_data, topic: "shipment_updated", logger: logger)
         end
         if shipment['buyer_invoice_id'].present?
           update_invoice_data = {status: 'CANCELLED', id: shipment['buyer_invoice_id']}
-          KafkaHelper::Client.produce(message: update_invoice_data, topic: "shipment_updated")
+          KafkaHelper::Client.produce(message: update_invoice_data, topic: "shipment_updated", logger: logger)
         end
       else
         if shipment['seller_invoice_id'].present?
@@ -72,7 +60,7 @@ module ShipmentHandler
             update_invoice_data.merge!({due_date: shipment['seller_due_date'].strftime("%Y-%m-%d")})
           end
         end
-        KafkaHelper::Client.produce(message: update_invoice_data, topic: "shipment_updated")
+        KafkaHelper::Client.produce(message: update_invoice_data, topic: "shipment_updated", logger: logger)
       end
     end
 
@@ -120,9 +108,7 @@ module ShipmentHandler
       @sku_codes = []
       line_item_details = []
       data[:dispatch_plan_item_relations].each do |dpir|
-        pp dpir['id']
         product_details = JSON.parse dpir['product_details']
-        pp product_details
         if [0,2,3,6].include? data[:dispatch_plan]['dispatch_mode']
           price_per_unit = product_details['order_price_per_unit']
           gst_percentage = product_details['order_item_gst']

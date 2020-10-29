@@ -8,7 +8,7 @@ module DpirHandler
   include InvoiceCreationHelper
 
   class << self
-    def handle_dpir_change(connection, data)
+    def handle_dpir_change(connection, data, logger)
       parsed_data = JSON.parse data
       dpir_update_data = SQL.get_all_dpir_info(connection, parsed_data['id'])
       if [0,2].include? dpir_update_data[:dispatch_plan]['dispatch_mode']
@@ -17,7 +17,7 @@ module DpirHandler
         @type = parsed_data['type']
         common_data = InvoiceCreationHelper.common_create_invoice_data dpir_update_data
         creation_data = add_information(dpir_update_data, common_data, parsed_data['old'])
-        KafkaHelper::Client.produce(message: creation_data, topic: 'shipment_created')
+        KafkaHelper::Client.produce(message: creation_data, topic: 'shipment_created', logger: logger)
       end
     end
 

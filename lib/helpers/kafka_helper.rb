@@ -13,9 +13,11 @@ module KafkaHelper
       kafka_producer.shutdown
     end
 
-    def self.produce(message:, topic:)
-      pp "Producing Message :- #{topic}"
-      pp message.to_json
+    def self.produce(message:, topic:, logger:)
+      if logger.present?
+        @logger.info "Producing Message :- #{topic}"
+        @logger.info message.to_json
+      end
       kafka_producer = client.producer
       kafka_producer.produce(message.to_json, topic: topic)
       kafka_producer.deliver_messages

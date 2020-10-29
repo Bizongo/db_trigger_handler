@@ -34,6 +34,7 @@ module DbTriggerHandler
 
     def subscribe
       notification_channels.each do |channel|
+        @logger.info "Subscribed :- #{channel}"
         SQL.subscribe_channel(@connection, channel)
       end
     end
@@ -43,17 +44,18 @@ module DbTriggerHandler
         loop do
           @connection.raw_connection.wait_for_notify do |event, id, data|
             begin
+              @logger.info "Listened :- #{event}, #{data}"
               case event
               when 'shipment_created'
-                ShipmentHandler.shipment_create_handler(@connection, data)
+                ShipmentHandler.shipment_create_handler(@connection, data, @logger)
               when 'shipment_cancelled'
-                ShipmentHandler.shipment_cancelled(@connection, data)
+                ShipmentHandler.shipment_cancelled(@connection, data, @logger)
               when 'shipment_updated'
-                ShipmentHandler.shipment_updated(@connection, data)
+                ShipmentHandler.shipment_updated(@connection, data, @logger)
               when 'shipment_dpir_changed'
-                ShipmentHandler.shipment_dpir_transaction_handler(@connection, data)
+                ShipmentHandler.shipment_dpir_transaction_handler(@connection, data, @logger)
               when 'dpir_updated'
-                DpirHandler.handle_dpir_change(@connection, data)
+                DpirHandler.handle_dpir_change(@connection, data, @logger)
               end
             rescue => e
               @logger.error(e)
@@ -72,7 +74,7 @@ module DbTriggerHandler
     end
 
     def notification_channels
-      %w[shipment_created shipment_dpir_changed shipment_cancelled shipment_updated dpir_updated]
+      %w[shipment_created shipment_dpir_changed shipment_updated dpir_updated]
     end
   end
 end

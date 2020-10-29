@@ -140,7 +140,7 @@ module ShipmentHandler
           international_shipment: data[:shipment]['international_shipment'],
           include_tax: product_details['include_tax'],
           currency_symbol: product_details['currency'],
-          invoice_using_igst: get_if_igst_required(data)
+          invoice_using_igst: InvoiceCreationHelper.get_if_igst_required(data)
       }
     end
 

@@ -40,17 +40,21 @@ module DbTriggerHandler
       begin
         loop do
           @connection.raw_connection.wait_for_notify do |event, id, data|
-            case event
-            when 'shipment_created'
-              ShipmentHandler.shipment_create_handler(@connection, data)
-            when 'shipment_cancelled'
-              ShipmentHandler.shipment_cancelled(@connection, data)
-            when 'shipment_updated'
-              ShipmentHandler.shipment_updated(@connection, data)
-            when 'shipment_dpir_changed'
-              ShipmentHandler.shipment_dpir_transaction_handler(@connection, data)
-            when 'dpir_updated'
-              DpirHandler.handle_dpir_change(@connection, data)
+            begin
+              case event
+              when 'shipment_created'
+                ShipmentHandler.shipment_create_handler(@connection, data)
+              when 'shipment_cancelled'
+                ShipmentHandler.shipment_cancelled(@connection, data)
+              when 'shipment_updated'
+                ShipmentHandler.shipment_updated(@connection, data)
+              when 'shipment_dpir_changed'
+                ShipmentHandler.shipment_dpir_transaction_handler(@connection, data)
+              when 'dpir_updated'
+                DpirHandler.handle_dpir_change(@connection, data)
+              end
+            rescue => e
+              pp "Error -> #{e}"
             end
           end
         end

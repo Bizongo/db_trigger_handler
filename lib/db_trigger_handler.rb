@@ -2,6 +2,7 @@ require "db_trigger_handler/version"
 require "helpers/sql"
 require 'handlers/shipment_handler'
 require 'handlers/dpir_handler'
+require 'logger'
 
 module DbTriggerHandler
   include SQL
@@ -12,6 +13,7 @@ module DbTriggerHandler
     def init(active_record_base)
       return if active_record_base.blank?
       @active_record_base = active_record_base
+      @logger = Logger.new("log/db_trigger_logs")
       execute
     end
 
@@ -54,7 +56,7 @@ module DbTriggerHandler
                 DpirHandler.handle_dpir_change(@connection, data)
               end
             rescue => e
-              pp "Error -> #{e}"
+              @logger.error(e)
             end
           end
         end

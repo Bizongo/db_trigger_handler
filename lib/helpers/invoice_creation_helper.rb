@@ -26,6 +26,18 @@ module InvoiceCreationHelper
       }
     end
 
+    def get_if_igst_required data
+      address = data[:dispatch_plan]['destination_address_snapshot']
+      address = JSON.parse address
+      if [0,2,3,6].include? data[:dispatch_plan]['dispatch_mode']
+        buyer_company_snapshot = JSON.parse data[:dispatch_plan]['buyer_company_snapshot']
+        address = buyer_company_snapshot['billing_address']
+      end
+      buyer_gstin_state_code = address['gstin_state_code']
+      seller_gstin_state_code = data[:transition_address]['gstin_state_code']
+      return seller_gstin_state_code != buyer_gstin_state_code
+    end
+
     private
 
     def get_buyer_company_details data

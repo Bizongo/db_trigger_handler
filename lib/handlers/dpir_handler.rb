@@ -87,12 +87,6 @@ module DpirHandler
       end
     end
 
-    def get_if_igst_required data
-      seller_gstin_state_code = data[:transition_address]['gstin_state_code']
-      buyer_gstin_state_code = @buyer_gstin_state_code
-      return seller_gstin_state_code != buyer_gstin_state_code
-    end
-
     def get_comment
       case @note_sub_type
       when ''

@@ -55,7 +55,7 @@ module ShipmentHandler
             update_invoice_data = {status: 'CANCELLED', id: shipment['buyer_invoice_id']}
             KafkaHelper::Client.produce(message: update_invoice_data, topic: "shipment_updated", logger: logger)
           else
-            generate_cancel_credit_note(shipment['id'], logger)
+            generate_cancel_credit_note(connection, shipment['id'], logger)
           end
         end
       else
@@ -150,7 +150,7 @@ module ShipmentHandler
       }
     end
 
-    def generate_cancel_credit_note(id, logger)
+    def generate_cancel_credit_note(connection, id, logger)
       cn_create_data = SQL.get_all_shipment_info(connection, id)
       if [0,4].include? cn_create_data[:dispatch_plan]['dispatch_mode']
         message = create_invoice(cn_create_data)

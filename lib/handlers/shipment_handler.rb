@@ -50,8 +50,13 @@ module ShipmentHandler
           KafkaHelper::Client.produce(message: update_invoice_data, topic: "shipment_updated", logger: logger)
         end
         if shipment['buyer_invoice_id'].present?
-          update_invoice_data = {status: 'CANCELLED', id: shipment['buyer_invoice_id']}
-          KafkaHelper::Client.produce(message: update_invoice_data, topic: "shipment_updated", logger: logger)
+          datetime = shipment['created_at'].to_datetime
+          if Time.now - datetime < 24.hours
+            update_invoice_data = {status: 'CANCELLED', id: shipment['buyer_invoice_id']}
+            KafkaHelper::Client.produce(message: update_invoice_data, topic: "shipment_updated", logger: logger)
+          else
+            generate_cancel_credit_note(shipment['id'], logger)
+          end
         end
       else
         if shipment['seller_invoice_id'].present?
@@ -73,13 +78,6 @@ module ShipmentHandler
           delivery_amount: shipment['actual_charges'].to_f,
           extra_amount: shipment['seller_extra_charges'].to_f,
           id: shipment['seller_invoice_id']
-      }
-    end
-
-    def cancel_invoice id
-      {
-          status: 'CANCELLED',
-          id: id
       }
     end
 
@@ -150,6 +148,18 @@ module ShipmentHandler
           currency_symbol: product_details['currency'],
           invoice_using_igst: get_if_igst_required(data)
       }
+    end
+
+    def generate_cancel_credit_note(id, logger)
+      cn_create_data = SQL.get_all_shipment_info(connection, id)
+      if [0,4].include? cn_create_data[:dispatch_plan]['dispatch_mode']
+        message = create_invoice(cn_create_data)
+        message.merge!({
+                           invoice_id_for_note: cn_create_data['buyer_invoice_id'],
+                           type: 'CREDIT_NOTE_FOR_INVOICE_NULLIFICATION'
+                       })
+        KafkaHelper::Client.produce(message: message, topic: "shipment_created", logger: logger)
+      end
     end
   end
 end

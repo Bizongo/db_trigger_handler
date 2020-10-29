@@ -60,12 +60,3 @@ CREATE TRIGGER shipment_changed AFTER INSERT OR UPDATE OR DELETE
 ON supply_chain.shipments
 FOR EACH ROW
 EXECUTE PROCEDURE notify_shipment_changes();
-
--- Test sending notification
-DO $$
-DECLARE
-BEGIN
-    PERFORM notify('shipment_created', '{}'::jsonb);
-END;
-$$
-LANGUAGE 'plpgsql';

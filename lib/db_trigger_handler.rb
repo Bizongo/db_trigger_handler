@@ -9,17 +9,15 @@ module DbTriggerHandler
   include DpirHandler
 
   class << self
-    def init(active_record_base, logger)
+    def init(active_record_base)
       return if active_record_base.blank?
       @active_record_base = active_record_base
-      logger.info "DbTriggerGemInfo :- init"
       execute
     end
 
     private
     def execute
       Thread.new do
-        logger.info "DbTriggerGemInfo :- init thread"
         begin
           @active_record_base.connection_pool.with_connection do |connection|
             @connection = connection
@@ -27,7 +25,6 @@ module DbTriggerHandler
             listen
           end
         ensure
-          logger.info "DbTriggerGemInfo :- exit thread"
           @active_record_base.clear_active_connections!
         end
       end
@@ -42,7 +39,6 @@ module DbTriggerHandler
     def listen
       begin
         loop do
-          logger.info "DbTriggerGemInfo :- in loop"
           @connection.raw_connection.wait_for_notify do |event, id, data|
             case event
             when 'shipment_created'
@@ -59,7 +55,6 @@ module DbTriggerHandler
           end
         end
       ensure
-        logger.info "DbTriggerGemInfo :- exit thread"
         unsubscribe
       end
     end

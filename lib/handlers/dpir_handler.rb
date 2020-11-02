@@ -65,7 +65,7 @@ module DpirHandler
         @note_sub_type = '_TAX_CHANGE_SYSTEM'
       end
       amount_without_tax = quantity.to_f * price_per_unit.to_f
-      @amount = quantity * price_per_unit * ( (@type=='GST_CHANGE'? 0:1 )+(gst_percentage/100))
+      @amount = quantity * price_per_unit * ( (@type=='GST_CHANGE'? 0:1)+(gst_percentage.to_f/100))
       [{
           item_name: product_details['product_name'],
           hsn: product_details['hsn_number'],

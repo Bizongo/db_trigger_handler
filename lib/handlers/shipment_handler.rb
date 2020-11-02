@@ -16,14 +16,17 @@ module ShipmentHandler
         KafkaHelper::Client.produce(message: create_invoice(shipment_create_data),
                                     topic: "shipment_created", logger: logger)
       elsif [3,6].include? shipment_create_data[:dispatch_plan]['dispatch_mode']
-        # Create Invoice for buyer_to_warehouse, buyer_to_seller
+        # Create Invoice for buyer_to_warehouse, buyer_to_seller (non lost returns)
         forward_shipment = SQL.get_shipment(connection, shipment_create_data[:shipment]['forward_shipment_id']);
-        message = create_invoice(shipment_create_data)
-        message.merge!({
-          invoice_id_for_note: forward_shipment['buyer_invoice_id'],
-          type: 'CREDIT_NOTE'
-        })
-        KafkaHelper::Client.produce(message: message, topic: "shipment_created", logger: logger)
+        actions = SQL.get_shipment_actions_by_id(connection, shipment_create_data[:shipment]['id'], 29)
+        if actions.blank?
+          message = create_invoice(shipment_create_data)
+          message.merge!({
+            invoice_id_for_note: forward_shipment['buyer_invoice_id'],
+            type: 'CREDIT_NOTE'
+          })
+          KafkaHelper::Client.produce(message: message, topic: "shipment_created", logger: logger)
+        end
       end
     end
 

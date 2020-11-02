@@ -77,6 +77,12 @@ module SQL
                     "select * from ums.addresses where id = #{id}").first
     end
 
+    def get_shipment_actions_by_id(connection, id, reason_id)
+      execute_query(connection,
+                    "select * from supply_chain.actions where actionable_type='Shipment'
+                          and actionable_id = #{id} and action_reason_id = #{reason_id}").to_a
+    end
+
     private
     def execute_query(connection, query)
       connection.execute(query)

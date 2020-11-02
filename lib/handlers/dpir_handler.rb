@@ -66,7 +66,7 @@ module DpirHandler
       end
       amount_without_tax = quantity.to_f * price_per_unit.to_f
       @amount = quantity * price_per_unit * ( (@type=='GST_CHANGE'? 0:1)+(gst_percentage.to_f/100))
-      [{
+      line_item_data = {
           item_name: product_details['product_name'],
           hsn: product_details['hsn_number'],
           dispatch_plan_item_relation_id: dpir['id'],
@@ -76,7 +76,16 @@ module DpirHandler
           amount_without_tax: amount_without_tax,
           ppu_difference: ppu_difference,
           gst_difference: gst_difference,
-      }]
+       }
+      if ['GST_CHANGE', 'PRICE_PER_UNIT_CHANGE'].include?(@type)
+        line_item_data.merge!({
+          new_rate_per_unit: product_details['order_price_per_unit'],
+          new_gst_percentage: product_details['order_item_gst'],
+          old_rate_per_unit: @type == 'PRICE_PER_UNIT_CHANGE' ? old.to_f : product_details['order_price_per_unit'],
+          old_gst_percentage: @type == 'GST_CHANGE' ? old.to_f : product_details['order_item_gst']
+        })
+      end
+      [line_item_data]
     end
 
     def get_note_type(new, old)

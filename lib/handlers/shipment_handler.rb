@@ -125,7 +125,7 @@ module ShipmentHandler
             amount_without_tax:amount_without_tax.to_f,
             dispatch_plan_item_relation_id: dpir['id']
         }
-        @amount += quantity * price_per_unit * (1+(gst_percentage/100))
+        @amount += quantity * price_per_unit * (1+(gst_percentage.to_f/100))
         @sku_codes << product_details['sku_code']
       end
       line_item_details

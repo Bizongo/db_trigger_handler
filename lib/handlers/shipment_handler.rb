@@ -34,7 +34,7 @@ module ShipmentHandler
       parsed_data = JSON.parse data
       shipment_lost_data = SQL.get_lost_shipment_info(connection, parsed_data['id'])
       if [0,2,4].include? shipment_lost_data[:dispatch_plan]['dispatch_mode']
-        message = create_lost_shipment_credit_note(shipment_lost_data)
+        message = create_lost_shipment_credit_note(shipment_lost_data, parsed_data['is_debit_note'].present?)
         message.merge!({
           invoice_id_for_note: shipment_lost_data[:shipment]['buyer_invoice_id'],
           supporting_document_details: get_supporting_document_details(shipment_lost_data),
@@ -60,6 +60,9 @@ module ShipmentHandler
           else
             generate_cancel_credit_note(connection, shipment['id'], logger)
           end
+        end
+        if shipment['buyer_invoice_id'].blank? && shipment['seller_invoice_id'].blank?
+          generate_return_cancel_debit_note(connection, shipment['id'], logger)
         end
       else
         if shipment['seller_invoice_id'].present?
@@ -95,19 +98,23 @@ module ShipmentHandler
       invoice_creation_data
     end
 
-    def create_lost_shipment_credit_note data
+    def create_lost_shipment_credit_note(data, is_debit_note = false)
       common_data = InvoiceCreationHelper.common_create_invoice_data(data)
       invoice_creation_data = common_data.merge!({
-        line_item_details: get_line_item_details(data, true),
+        line_item_details: get_line_item_details(data, true, is_debit_note),
         amount: @amount
       })
       invoice_creation_data
     end
 
-    def get_line_item_details(data, is_lost = false)
+    def get_line_item_details(data, is_lost = false, is_debit_note = false)
       @amount = 0
       @sku_codes = []
       line_item_details = []
+      lost_data = []
+      if is_lost && is_debit_note
+        lost_data = JSON.parse data[:shipment]['items_change_snapshot']
+      end
       data[:dispatch_plan_item_relations].each do |dpir|
         product_details = JSON.parse dpir['product_details']
         if [0,2,3,6].include? data[:dispatch_plan]['dispatch_mode']
@@ -119,6 +126,15 @@ module ShipmentHandler
         end
         quantity = is_lost ? dpir['lost_quantity'].to_f : dpir['shipped_quantity'].to_f
         amount_without_tax = quantity.to_f * price_per_unit.to_f
+        if is_lost && is_debit_note && !lost_data.blank?
+          lost_quantity = quantity
+          lost_data.each do |datum|
+            if dpir['id'] = datum['id']
+              lost_quantity = (datum['lost_quantity'].to_f - lost_quantity.to_f).abs
+            end
+          end
+          quantity = lost_quantity.to_f
+        end
         line_item_details << {
             item_name: product_details['product_name'],
             hsn: product_details['hsn_number'],
@@ -145,6 +161,23 @@ module ShipmentHandler
           currency_symbol: product_details['currency'],
           invoice_using_igst: InvoiceCreationHelper.get_if_igst_required(data)
       }
+    end
+
+    def generate_return_cancel_debit_note(connection, id, logger)
+      dn_create_data = SQL.get_all_shipment_info(connection, id)
+      if [3,6].include? shipment_create_data[:dispatch_plan]['dispatch_mode']
+        # Create DN for buyer_to_warehouse, buyer_to_seller cancellation (non lost returns)
+        forward_shipment = SQL.get_shipment(connection, dn_create_data[:shipment]['forward_shipment_id']);
+        actions = SQL.get_shipment_actions_by_id(connection, dn_create_data[:shipment]['id'], 29)
+        if actions.blank?
+          message = create_invoice(dn_create_data)
+          message.merge!({
+                             invoice_id_for_note: forward_shipment['buyer_invoice_id'],
+                             type: 'DEBIT_NOTE'
+                         })
+          KafkaHelper::Client.produce(message: message, topic: "shipment_created", logger: logger)
+        end
+      end
     end
 
     def generate_cancel_credit_note(connection, id, logger)

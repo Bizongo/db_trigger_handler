@@ -38,7 +38,7 @@ module ShipmentHandler
         message.merge!({
           invoice_id_for_note: shipment_lost_data[:shipment]['buyer_invoice_id'],
           supporting_document_details: get_supporting_document_details(shipment_lost_data),
-          type: 'CREDIT_NOTE'
+          type: parsed_data['is_debit_note'].present? ? 'DEBIT_NOTE' : 'CREDIT_NOTE'
         })
         KafkaHelper::Client.produce(message: message, topic: "shipment_created", logger: logger)
       end

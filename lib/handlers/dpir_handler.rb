@@ -60,7 +60,7 @@ module DpirHandler
       when 'GST_CHANGE'
         new_gst_percentage = gst_percentage.to_f
         gst_percentage = (gst_percentage.to_f-old.to_f).abs
-        gst_difference = gst_difference
+        gst_difference = gst_percentage
         get_note_type(new_gst_percentage, old)
         @note_sub_type = '_TAX_CHANGE_SYSTEM'
       end

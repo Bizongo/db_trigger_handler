@@ -15,6 +15,9 @@ module DpirHandler
         @note_type = 'CREDIT_NOTE'
         @note_sub_type = ''
         @type = parsed_data['type']
+        if @type == 'LOST_QUANTITY_CHANGE'
+          return if dpir_update_data[:shipment]['status'] == 5
+        end
         common_data = InvoiceCreationHelper.common_create_invoice_data dpir_update_data
         creation_data = add_information(dpir_update_data, common_data, parsed_data['old'])
         KafkaHelper::Client.produce(message: creation_data, topic: 'shipment_created', logger: logger)

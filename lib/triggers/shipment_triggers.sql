@@ -44,7 +44,7 @@ BEGIN
     PERFORM pg_notify(channel, notify_data::text);
     RETURN NEW;
   ELSIF TG_OP ilike('UPDATE') and
-  (OLD.status = and new.status = )
+  (OLD.status = 5 and new.status = 2)
   THEN
     channel := 'shipment_dpir_changed';
     notify_data := json_build_object('id', NEW.id, 'is_debit_note', true);

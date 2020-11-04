@@ -83,6 +83,13 @@ module SQL
                           and actionable_id = #{id} and action_reason_id = #{reason_id}").to_a
     end
 
+    def get_inwarded_good(connection, dpir_id)
+      execute_query(connection,
+                    "select COALESCE(sum(lil.quantity), 0) as quantity from supply_chain.lot_informations li join supply_chain.lot_information_locations lil
+                           on lil.lot_information_id = li.id where li.inward = true and li.is_valid is not false
+                           and lot_infoable_type = 'DispatchPlanItemRelation' and lot_infoable_id = #{dpir_id}").first
+    end
+
     private
     def execute_query(connection, query)
       connection.execute(query)

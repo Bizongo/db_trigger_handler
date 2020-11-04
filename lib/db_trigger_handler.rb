@@ -52,6 +52,8 @@ module DbTriggerHandler
                 ShipmentHandler.shipment_cancelled(@connection, data, @logger)
               when 'shipment_updated'
                 ShipmentHandler.shipment_updated(@connection, data, @logger)
+              when 'shipment_delivered'
+                ShipmentHandler.shipment_delivered(@connection, data, @logger)
               when 'shipment_dpir_changed'
                 ShipmentHandler.shipment_dpir_transaction_handler(@connection, data, @logger)
               when 'dpir_updated'

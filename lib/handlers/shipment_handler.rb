@@ -19,7 +19,7 @@ module ShipmentHandler
         # Create Invoice for buyer_to_warehouse, buyer_to_seller (non lost returns)
         forward_shipment = SQL.get_shipment(connection, shipment_create_data[:shipment]['forward_shipment_id']);
         actions = SQL.get_shipment_actions_by_id(connection, shipment_create_data[:shipment]['id'], 29)
-        if actions.blank? and forward_shipment['status'] != 5
+        if actions.blank? and forward_shipment['status'] != 2
           message = create_invoice(shipment_create_data)
           message.merge!({
             invoice_id_for_note: forward_shipment['buyer_invoice_id'],
@@ -41,6 +41,17 @@ module ShipmentHandler
           type: parsed_data['is_debit_note'].present? ? 'DEBIT_NOTE' : 'CREDIT_NOTE'
         })
         KafkaHelper::Client.produce(message: message, topic: "shipment_created", logger: logger)
+      elsif [3,6].include? shipment_lost_data[:dispatch_plan]['dispatch_mode']
+        forward_shipment = SQL.get_shipment(connection, shipment_lost_data[:shipment]['forward_shipment_id'])
+        if forward_shipment['status'] != 2
+          message = create_lost_shipment_credit_note(shipment_lost_data, parsed_data['is_debit_note'].present?)
+          message.merge!({
+            invoice_id_for_note: forward_shipment['buyer_invoice_id'],
+            supporting_document_details: get_supporting_document_details(shipment_lost_data),
+            type: 'CREDIT_NOTE'
+          })
+          KafkaHelper::Client.produce(message: message, topic: "shipment_created", logger: logger)
+        end
       end
     end
 
@@ -72,6 +83,32 @@ module ShipmentHandler
           end
           KafkaHelper::Client.produce(message: update_invoice_data, topic: "shipment_updated", logger: logger)
         end
+      end
+    end
+
+    def shipment_delivered(connection, data, logger)
+      parse_data = JSON.parse data
+      return_shipment_delivered_data = SQL.get_all_shipment_info(connection, parse_data['id'])
+      actions = SQL.get_shipment_actions_by_id(connection, return_shipment_delivered_data[:shipment]['id'], 29)
+      forward_shipment = SQL.get_shipment(connection, return_shipment_delivered_data[:shipment]['forward_shipment_id'])
+      if [3,6].include? return_shipment_delivered_data[:dispatch_plan]['dispatch_mode'] &&
+        return_shipment_delivered_data[:shipment]['status'] == 2 && forward_shipment[:shipment]['status'] == 2 &&
+        actions.blank?
+        dpirs = return_shipment_delivered_data[:dispatch_plan_item_relations]
+        new_dpirs = []
+        dpirs.each do |dpir|
+          dpir['shipped_quantity'] = SQL.get_inwarded_good(connection, dpir['id'])['quantity']
+          new_dpirs << dpir
+        end
+        return_shipment_delivered_data[:dispatch_plan_item_relations] = new_dpirs
+
+        # Create Invoice for buyer_to_warehouse, buyer_to_seller (non lost returns)
+        message = create_invoice(return_shipment_delivered_data)
+        message.merge!({
+          invoice_id_for_note: forward_shipment['buyer_invoice_id'],
+          type: 'CREDIT_NOTE'
+        })
+        KafkaHelper::Client.produce(message: message, topic: "shipment_created", logger: logger)
       end
     end
 

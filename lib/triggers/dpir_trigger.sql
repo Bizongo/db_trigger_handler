@@ -14,12 +14,12 @@ BEGIN
             notify_data := json_build_object('id', NEW.id, 'old', OLD.shipped_quantity, 'type', 'SHIPPED_QUANTITY_CHANGE');
             PERFORM pg_notify(channel, notify_data::text);
             RETURN NEW;
-        ELSIF OLD.returned_quantity  is not NULL and OLD.returned_quantity != 0 and NEW.returned_quantity != 0 and OLD.returned_quantity is DISTINCT FROM NEW.returned_quantity
-        THEN
-            channel := 'dpir_updated';
-            notify_data := json_build_object('id', NEW.id, 'old', OLD.returned_quantity, 'type', 'RETURNED_QUANTITY_CHANGE');
-            PERFORM pg_notify(channel, notify_data::text);
-            RETURN NEW;
+--         ELSIF OLD.returned_quantity  is not NULL and OLD.returned_quantity != 0 and NEW.returned_quantity != 0 and OLD.returned_quantity is DISTINCT FROM NEW.returned_quantity
+--         THEN
+--             channel := 'dpir_updated';
+--             notify_data := json_build_object('id', NEW.id, 'old', OLD.returned_quantity, 'type', 'RETURNED_QUANTITY_CHANGE');
+--             PERFORM pg_notify(channel, notify_data::text);
+--             RETURN NEW;
         ELSIF OLD.lost_quantity is not NULL and OLD.lost_quantity != 0 and OLD.lost_quantity is DISTINCT FROM NEW.lost_quantity
         THEN
             channel := 'dpir_updated';

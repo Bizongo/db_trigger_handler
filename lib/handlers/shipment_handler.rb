@@ -206,7 +206,7 @@ module ShipmentHandler
         # Create DN for buyer_to_warehouse, buyer_to_seller cancellation (non lost returns)
         forward_shipment = SQL.get_shipment(connection, dn_create_data[:shipment]['forward_shipment_id']);
         actions = SQL.get_shipment_actions_by_id(connection, dn_create_data[:shipment]['id'], 29)
-        if actions.blank?
+        if actions.blank? && forward_shipment['delivered_at'].blank?
           message = create_invoice(dn_create_data)
           message.merge!({
                              invoice_id_for_note: forward_shipment['buyer_invoice_id'],

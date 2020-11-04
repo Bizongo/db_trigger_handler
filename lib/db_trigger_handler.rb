@@ -76,7 +76,7 @@ module DbTriggerHandler
     end
 
     def notification_channels
-      %w[shipment_created shipment_dpir_changed shipment_updated dpir_updated]
+      %w[shipment_created shipment_delivered shipment_dpir_changed shipment_updated dpir_updated]
     end
   end
 end

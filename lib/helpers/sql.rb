@@ -18,12 +18,12 @@ module SQL
       }
     end
 
-    def get_lost_shipment_info(connection, id)
+    def get_lost_shipment_info(connection, id, is_debit_note = false)
       shipment = get_shipment(connection,id)
       {
           shipment: shipment,
           dispatch_plan: get_dispatch_plan(connection, shipment['dispatch_plan_id']),
-          dispatch_plan_item_relations: get_lost_dispatch_plan_item_relations(connection, shipment['dispatch_plan_id']),
+          dispatch_plan_item_relations: is_debit_note ? get_dispatch_plan_item_relations(connection, shipment['dispatch_plan_id']) : get_lost_dispatch_plan_item_relations(connection, shipment['dispatch_plan_id']),
           transition_address: get_transition_address(connection, shipment['transition_address_id'])
       }
     end

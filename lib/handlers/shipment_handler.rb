@@ -19,7 +19,7 @@ module ShipmentHandler
         # Create Invoice for buyer_to_warehouse, buyer_to_seller (non lost returns)
         forward_shipment = SQL.get_shipment(connection, shipment_create_data[:shipment]['forward_shipment_id']);
         actions = SQL.get_shipment_actions_by_id(connection, shipment_create_data[:shipment]['id'], 29)
-        if actions.blank?
+        if actions.blank? and forward_shipment['status'] != 5
           message = create_invoice(shipment_create_data)
           message.merge!({
             invoice_id_for_note: forward_shipment['buyer_invoice_id'],
@@ -32,7 +32,7 @@ module ShipmentHandler
 
     def shipment_dpir_transaction_handler(connection, data, logger)
       parsed_data = JSON.parse data
-      shipment_lost_data = SQL.get_lost_shipment_info(connection, parsed_data['id'])
+      shipment_lost_data = SQL.get_lost_shipment_info(connection, parsed_data['id'], parsed_data['is_debit_note'].present?)
       if [0,2,4].include? shipment_lost_data[:dispatch_plan]['dispatch_mode']
         message = create_lost_shipment_credit_note(shipment_lost_data, parsed_data['is_debit_note'].present?)
         message.merge!({
@@ -165,7 +165,7 @@ module ShipmentHandler
 
     def generate_return_cancel_debit_note(connection, id, logger)
       dn_create_data = SQL.get_all_shipment_info(connection, id)
-      if [3,6].include? shipment_create_data[:dispatch_plan]['dispatch_mode']
+      if [3,6].include? dn_create_data[:dispatch_plan]['dispatch_mode']
         # Create DN for buyer_to_warehouse, buyer_to_seller cancellation (non lost returns)
         forward_shipment = SQL.get_shipment(connection, dn_create_data[:shipment]['forward_shipment_id']);
         actions = SQL.get_shipment_actions_by_id(connection, dn_create_data[:shipment]['id'], 29)

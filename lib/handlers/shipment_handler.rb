@@ -43,7 +43,7 @@ module ShipmentHandler
         KafkaHelper::Client.produce(message: message, topic: "shipment_created", logger: logger)
       elsif [3,6].include? shipment_lost_data[:dispatch_plan]['dispatch_mode']
         forward_shipment = SQL.get_shipment(connection, shipment_lost_data[:shipment]['forward_shipment_id'])
-        if forward_shipment['delivered_at'].blank?
+        if !forward_shipment['delivered_at'].blank?
           message = create_lost_shipment_credit_note(shipment_lost_data, parsed_data['is_debit_note'].present?)
           message.merge!({
             invoice_id_for_note: forward_shipment['buyer_invoice_id'],
@@ -92,7 +92,7 @@ module ShipmentHandler
       return unless [3,6].include? return_shipment_delivered_data[:dispatch_plan]['dispatch_mode']
       actions = SQL.get_shipment_actions_by_id(connection, return_shipment_delivered_data[:shipment]['id'], 29)
       forward_shipment = SQL.get_shipment(connection, return_shipment_delivered_data[:shipment]['forward_shipment_id'])
-      if return_shipment_delivered_data[:shipment]['status'] == 2 && forward_shipment['delivered_at'].blank? &&
+      if return_shipment_delivered_data[:shipment]['status'] == 2 && !forward_shipment['delivered_at'].blank? &&
         actions.blank?
         dpirs = return_shipment_delivered_data[:dispatch_plan_item_relations]
         new_dpirs = []

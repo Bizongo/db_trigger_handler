@@ -129,7 +129,7 @@ module ShipmentHandler
         if is_lost && is_debit_note && !lost_data.blank?
           lost_quantity = quantity
           lost_data.each do |datum|
-            if dpir['id'] = datum['id']
+            if dpir['id'] == datum['id']
               lost_quantity = (datum['lost_quantity'].to_f - lost_quantity.to_f).abs
             end
           end

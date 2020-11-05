@@ -20,6 +20,7 @@ module ShipmentHandler
         forward_shipment = SQL.get_shipment(connection, shipment_create_data[:shipment]['forward_shipment_id']);
         actions = SQL.get_shipment_actions_by_id(connection, shipment_create_data[:shipment]['id'], 29)
         if actions.blank? and forward_shipment['delivered_at'].blank?
+          @comment = 'Return Created'
           message = create_invoice(shipment_create_data)
           message.merge!({
             invoice_id_for_note: forward_shipment['buyer_invoice_id'],
@@ -34,6 +35,7 @@ module ShipmentHandler
       parsed_data = JSON.parse data
       shipment_lost_data = SQL.get_lost_shipment_info(connection, parsed_data['id'], parsed_data['is_debit_note'].present?)
       if [0,2,4].include? shipment_lost_data[:dispatch_plan]['dispatch_mode']
+        @comment = 'Lost Created'
         message = create_lost_shipment_credit_note(shipment_lost_data, parsed_data['is_debit_note'].present?)
         message.merge!({
           invoice_id_for_note: shipment_lost_data[:shipment]['buyer_invoice_id'],
@@ -44,6 +46,7 @@ module ShipmentHandler
       elsif [3,6].include? shipment_lost_data[:dispatch_plan]['dispatch_mode']
         forward_shipment = SQL.get_shipment(connection, shipment_lost_data[:shipment]['forward_shipment_id'])
         if !forward_shipment['delivered_at'].blank?
+          @comment = 'Lost Created'
           message = create_lost_shipment_credit_note(shipment_lost_data, parsed_data['is_debit_note'].present?)
           message.merge!({
             invoice_id_for_note: forward_shipment['buyer_invoice_id'],
@@ -69,10 +72,12 @@ module ShipmentHandler
             update_invoice_data = {status: 'CANCELLED', id: shipment['buyer_invoice_id']}
             KafkaHelper::Client.produce(message: update_invoice_data, topic: "shipment_updated", logger: logger)
           else
+            @comment = 'Shipment Cancelled'
             generate_cancel_credit_note(connection, shipment['id'], logger)
           end
         end
         if shipment['buyer_invoice_id'].blank? && shipment['seller_invoice_id'].blank?
+          @comment = 'Return Cancelled'
           generate_return_cancel_debit_note(connection, shipment['id'], logger)
         end
       else
@@ -105,6 +110,7 @@ module ShipmentHandler
         return_shipment_delivered_data[:dispatch_plan_item_relations] = new_dpirs
 
         # Create Invoice for buyer_to_warehouse, buyer_to_seller (non lost returns)
+        @comment = 'Return Delivered'
         message = create_invoice(return_shipment_delivered_data)
         message.merge!({
           invoice_id_for_note: forward_shipment['buyer_invoice_id'],
@@ -198,7 +204,8 @@ module ShipmentHandler
           international_shipment: data[:shipment]['international_shipment'],
           include_tax: product_details['include_tax'],
           currency_symbol: product_details['currency'],
-          invoice_using_igst: InvoiceCreationHelper.get_if_igst_required(data)
+          invoice_using_igst: InvoiceCreationHelper.get_if_igst_required(data),
+          comment: @comment
       }
     end
 

@@ -66,6 +66,11 @@ module SQL
                     "select * from supply_chain.dispatch_plan_item_relations where id = #{id}").first
     end
 
+    def get_dispatch_plan_item_relations_unchecked(connection, dispatch_plan_id)
+      execute_query(connection,
+                    "select * from supply_chain.dispatch_plan_item_relations dispatch_plan_id = #{dispatch_plan_id}").to_a
+    end
+
     def get_lost_dispatch_plan_item_relations(connection, dispatch_plan_id)
       execute_query(connection,
                     "select * from supply_chain.dispatch_plan_item_relations"+

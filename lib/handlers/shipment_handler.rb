@@ -94,11 +94,13 @@ module ShipmentHandler
       forward_shipment = SQL.get_shipment(connection, return_shipment_delivered_data[:shipment]['forward_shipment_id'])
       if return_shipment_delivered_data[:shipment]['status'] == 2 && !forward_shipment['delivered_at'].blank? &&
         actions.blank?
-        dpirs = return_shipment_delivered_data[:dispatch_plan_item_relations]
+        dpirs = SQL.get_dispatch_plan_item_relations_unchecked(connection, return_shipment_delivered_data[:dispatch_plan]['id'])
         new_dpirs = []
         dpirs.each do |dpir|
           dpir['shipped_quantity'] = SQL.get_inwarded_good(connection, dpir['id'])['quantity']
-          new_dpirs << dpir
+          unless dpir['shipped_quantity'] == 0
+            new_dpirs << dpir
+          end
         end
         return_shipment_delivered_data[:dispatch_plan_item_relations] = new_dpirs
 

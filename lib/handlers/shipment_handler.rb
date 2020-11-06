@@ -35,7 +35,7 @@ module ShipmentHandler
       parsed_data = JSON.parse data
       shipment_lost_data = SQL.get_lost_shipment_info(connection, parsed_data['id'], parsed_data['is_debit_note'].present?)
       if [0,2,4].include? shipment_lost_data[:dispatch_plan]['dispatch_mode']
-        @comment = 'Lost Created'
+        @comment = 'Lost'
         message = create_lost_shipment_credit_note(shipment_lost_data, parsed_data['is_debit_note'].present?)
         message.merge!({
           invoice_id_for_note: shipment_lost_data[:shipment]['buyer_invoice_id'],
@@ -46,7 +46,7 @@ module ShipmentHandler
       elsif [3,6].include? shipment_lost_data[:dispatch_plan]['dispatch_mode']
         forward_shipment = SQL.get_shipment(connection, shipment_lost_data[:shipment]['forward_shipment_id'])
         if !forward_shipment['delivered_at'].blank?
-          @comment = 'Lost Created'
+          @comment = 'Return Lost'
           message = create_lost_shipment_credit_note(shipment_lost_data, parsed_data['is_debit_note'].present?)
           message.merge!({
             invoice_id_for_note: forward_shipment['buyer_invoice_id'],

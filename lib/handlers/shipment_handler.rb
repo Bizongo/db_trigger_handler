@@ -205,7 +205,7 @@ module ShipmentHandler
           include_tax: product_details['include_tax'],
           currency_symbol: product_details['currency'],
           invoice_using_igst: InvoiceCreationHelper.get_if_igst_required(data),
-          comment: @comment
+          comment: @comment.presence || ''
       }
     end
 

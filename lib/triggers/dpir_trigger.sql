@@ -41,6 +41,18 @@ BEGIN
                 notify_data := json_build_object('id', NEW.id, 'old', OLD.product_details->>'order_item_gst', 'type', 'GST_CHANGE');
                 PERFORM pg_notify(channel, notify_data::text);
             END IF;
+            IF OLD.product_details->>'hsn_number' is not NULL and OLD.product_details->>'hsn_number' is DISTINCT FROM NEW.product_details->>'hsn_number'
+            THEN
+                channel := 'dpir_updated';
+                notify_data := json_build_object('id', NEW.id, 'old', OLD.product_details->>'hsn_number', 'type', 'HSN_CHANGE');
+                PERFORM pg_notify(channel, notify_data::text);
+            END IF;
+            IF OLD.product_details->>'product_name' is not NULL and OLD.product_details->>'product_name' is DISTINCT FROM NEW.product_details->>'product_name'
+            THEN
+                channel := 'dpir_updated';
+                notify_data := json_build_object('id', NEW.id, 'old', OLD.product_details->>'product_name', 'type', 'PRODUCT_NAME_CHANGE');
+                PERFORM pg_notify(channel, notify_data::text);
+            END IF;
             RETURN NEW;
         END IF;
     END IF;

@@ -12,9 +12,13 @@ module DpirHandler
       parsed_data = JSON.parse data
       dpir_update_data = SQL.get_all_dpir_info(connection, parsed_data['id'])
       if [0,2].include? dpir_update_data[:dispatch_plan]['dispatch_mode']
+        @type = parsed_data['type']
+        if @type == 'HSN_CHANGE' || @type == 'PRODUCT_NAME_CHANGE'
+          regenerate_invoice(dpir_update_data, parsed_data, logger)
+          return
+        end
         @note_type = 'CREDIT_NOTE'
         @note_sub_type = ''
-        @type = parsed_data['type']
         if @type == 'LOST_QUANTITY_CHANGE'
           return if dpir_update_data[:shipment]['status'] == 5
         end
@@ -25,6 +29,26 @@ module DpirHandler
     end
 
     private
+
+    def regenerate_invoice(dpir_update_data, parsed_data, logger)
+      creation_data = {
+          invoice_id: dpir_update_data[:shipment]['buyer_invoice_id'],
+          type: @type
+      }
+      product_details = JSON.parse dpir_update_data[:dispatch_plan_item_relation]['product_details']
+      if @type == 'HSN_CHANGE'
+        creation_data = creation_data.merge!({
+          old_data: parsed_data['old'],
+          new_data: product_details['hsn_number']
+        })
+      elsif @type == 'PRODUCT_NAME_CHANGE'
+        creation_data = creation_data.merge!({
+          old_data: parsed_data['old'],
+          new_data: product_details['product_name']
+        })
+      end
+      KafkaHelper::Client.produce(message: creation_data, topic: 'regenerate_invoice', logger: logger)
+    end
 
     def add_information(data, common_data, old)
       common_data.merge!({

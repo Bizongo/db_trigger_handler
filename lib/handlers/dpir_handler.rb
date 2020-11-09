@@ -31,23 +31,22 @@ module DpirHandler
     private
 
     def regenerate_invoice(dpir_update_data, parsed_data, logger)
-      creation_data = {
-          invoice_id: dpir_update_data[:shipment]['buyer_invoice_id'],
-          generation_type: @type
-      }
       product_details = JSON.parse dpir_update_data[:dispatch_plan_item_relation]['product_details']
       if @type == 'HSN_CHANGE'
-        creation_data = creation_data.merge!({
+        change_data = change_data.merge!({
           old_data: parsed_data['old'],
           new_data: product_details['hsn_number']
         })
       elsif @type == 'PRODUCT_NAME_CHANGE'
-        creation_data = creation_data.merge!({
+        change_data = change_data.merge!({
           old_data: parsed_data['old'],
           new_data: product_details['product_name']
         })
       end
-      KafkaHelper::Client.produce(message: creation_data, topic: 'regenerate_invoice', logger: logger)
+      KafkaHelper::Client.produce(message: {
+          id: dpir_update_data[:shipment]['buyer_invoice_id'],
+          change_data: change_data
+      }, topic: 'regenerate_invoice', logger: logger)
     end
 
     def add_information(data, common_data, old)

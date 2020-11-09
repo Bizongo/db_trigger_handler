@@ -17,7 +17,7 @@ module DbTriggerHandler
       @active_record_base = active_record_base
       @logger = Logger.new("log/db_trigger.log")
       @logger.info("Info :- #{ENV['db_trigger_handling']}")
-      return unless ENV['db_trigger_handling']
+      # return unless ENV['db_trigger_handling']
       execute
     end
 

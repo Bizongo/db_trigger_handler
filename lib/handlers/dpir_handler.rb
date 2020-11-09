@@ -32,6 +32,7 @@ module DpirHandler
 
     def regenerate_invoice(dpir_update_data, parsed_data, logger)
       product_details = JSON.parse dpir_update_data[:dispatch_plan_item_relation]['product_details']
+      change_data = {}
       if @type == 'HSN_CHANGE'
         change_data = change_data.merge!({
           old_data: parsed_data['old'],

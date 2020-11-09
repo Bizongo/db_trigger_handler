@@ -95,6 +95,16 @@ module SQL
                            and lot_infoable_type = 'DispatchPlanItemRelation' and lot_infoable_id = #{dpir_id}").first
     end
 
+    def get_billing_address(connection, id)
+      execute_query(connection, "select buyer_company_snapshot from
+                            supply_chain.dispatch_plans where id = #{id}").first
+    end
+
+    def get_destination_address(connection, id)
+      execute_query(connection, "select destination_address_snapshot from
+                            supply_chain.dispatch_plans where id = #{id}").first
+    end
+
     private
     def execute_query(connection, query)
       connection.execute(query)

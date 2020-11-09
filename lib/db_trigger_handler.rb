@@ -2,12 +2,14 @@ require "db_trigger_handler/version"
 require "helpers/sql"
 require 'handlers/shipment_handler'
 require 'handlers/dpir_handler'
+require 'handlers/dp_handler'
 require 'logger'
 
 module DbTriggerHandler
   include SQL
   include ShipmentHandler
   include DpirHandler
+  include DpHandler
 
   class << self
     def init(active_record_base)
@@ -60,6 +62,8 @@ module DbTriggerHandler
                 ShipmentHandler.shipment_dpir_transaction_handler(@connection, data, @logger)
               when 'dpir_updated'
                 DpirHandler.handle_dpir_change(@connection, data, @logger)
+              when 'dp_updated'
+                DpHandler.handle_dp_updates(@connection, data, @logger)
               end
             rescue => e
               @logger.error(e)

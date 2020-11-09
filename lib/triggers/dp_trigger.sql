@@ -20,7 +20,7 @@ BEGIN
         ELSIF OLD.destination_address_snapshot is not null and OLD.destination_address_snapshot <> '{}'::jsonb and NEW.destination_address_snapshot <> '{}'::jsonb
         THEN
             channel := 'dp_updated';
-            notify_data := json_build_object('id', NEW.id, 'old', OLD.destination_address_snapshot, 'type', 'DESTINATION_CHANGE');
+            notify_data := json_build_object('id', NEW.id, 'type', 'DESTINATION_CHANGE');
             PERFORM pg_notify(channel, notify_data::text);
             RETURN NEW;
         END IF;

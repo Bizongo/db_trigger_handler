@@ -25,7 +25,7 @@ module DpHandler
       shipment = SQL.get_shipment_from_dp(connection, data['id'])
       KafkaHelper::Client.produce(message: {
           id: shipment['buyer_invoice_id'],
-          ship_to_details: get_address_object(result[:destination_address]),
+          ship_to_details: get_address_object(result['destination_address_snapshot']),
       }, topic: 'shipment_updated', logger: logger)
     end
 

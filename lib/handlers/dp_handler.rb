@@ -31,6 +31,7 @@ module DpHandler
 
     def update_billing_address(connection, data, logger)
       result = SQL.get_billing_address(connection, data['id'])
+      logger.info result
       buyer_company_snapshot = JSON.parse result[:buyer_company_snapshot]
       old_buyer_company_snapshot = JSON.parse data['old']
       state_code_new = buyer_company_snapshot['billing_address']['gstin'][0..1]

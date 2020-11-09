@@ -96,8 +96,8 @@ module SQL
     end
 
     def get_billing_address(connection, id)
-      execute_query(connection, "select buyer_company_snapshot from
-                            supply_chain.dispatch_plans where id = #{id}").first
+      execute_query(connection, "select buyer_company_snapshot
+                                      from supply_chain.dispatch_plans where id = #{id}").first
     end
 
     def get_destination_address(connection, id)

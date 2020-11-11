@@ -4,7 +4,7 @@ require 'handlers/shipment_handler'
 require 'handlers/dpir_handler'
 require 'handlers/dp_handler'
 require 'logger'
-# require 'env'
+require 'dotenv'
 
 module DbTriggerHandler
   include SQL
@@ -14,10 +14,11 @@ module DbTriggerHandler
 
   class << self
     def init(active_record_base)
+      Dotenv.load
       return if active_record_base.blank?
       @active_record_base = active_record_base
       @logger = Logger.new("log/db_trigger.log")
-      @logger.info("Info :- #{ENV['db_trigger_handling']}")
+      @logger.info("Info :- #{ENV}")
       # return unless ENV['db_trigger_handling']
       execute
     end

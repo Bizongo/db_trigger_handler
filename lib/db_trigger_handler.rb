@@ -4,6 +4,7 @@ require 'handlers/shipment_handler'
 require 'handlers/dpir_handler'
 require 'handlers/dp_handler'
 require 'logger'
+require 'env'
 
 module DbTriggerHandler
   include SQL

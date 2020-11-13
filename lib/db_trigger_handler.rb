@@ -54,8 +54,6 @@ module DbTriggerHandler
               case event
               when 'shipment_created'
                 ShipmentHandler.shipment_create_handler(@connection, data, @logger, @kafka_broker)
-              when 'shipment_cancelled'
-                ShipmentHandler.shipment_cancelled(@connection, data, @logger, @kafka_broker)
               when 'shipment_updated'
                 ShipmentHandler.shipment_updated(@connection, data, @logger, @kafka_broker)
               when 'shipment_delivered'

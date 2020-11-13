@@ -33,6 +33,7 @@ module DbTriggerHandler
             listen
           end
         ensure
+          @logger.info "Closing"
           @active_record_base.clear_active_connections!
         end
       end

@@ -8,28 +8,28 @@ module DpHandler
   include InvoiceCreationHelper
 
   class << self
-    def handle_dp_updates(connection, data, logger)
+    def handle_dp_updates(connection, data, logger, kafka_broker)
       parsed_data = JSON.parse data
       @type = parsed_data['type']
       if @type == 'BUYER_DETAILS_UPDATE'
-        update_billing_address(connection, parsed_data, logger)
+        update_billing_address(connection, parsed_data, logger, kafka_broker)
       else @type == "DESTINATION_CHANGE"
-      update_shipping_address(connection, parsed_data, logger)
+      update_shipping_address(connection, parsed_data, logger, kafka_broker)
       end
     end
 
     private
 
-    def update_shipping_address(connection, data, logger)
+    def update_shipping_address(connection, data, logger, kafka_broker)
       result = SQL.get_destination_address(connection, data['id'])
       shipment = SQL.get_shipment_from_dp(connection, data['id'])
       KafkaHelper::Client.produce(message: {
           id: shipment['buyer_invoice_id'],
           ship_to_details: get_address_object(result['destination_address_snapshot']),
-      }, topic: 'shipment_updated', logger: logger)
+      }, topic: 'shipment_updated', logger: logger, kafka_broker: kafka_broker)
     end
 
-    def update_billing_address(connection, data, logger)
+    def update_billing_address(connection, data, logger, kafka_broker)
       result = SQL.get_billing_address(connection, data['id'])
       buyer_company_snapshot = JSON.parse result['buyer_company_snapshot']
       old_buyer_company_snapshot = JSON.parse data['old']
@@ -40,7 +40,7 @@ module DpHandler
         KafkaHelper::Client.produce(message: {
             id: shipment['buyer_invoice_id'],
             buyer_details: get_buyer_details(buyer_company_snapshot)
-        }, topic: 'shipment_updated', logger: logger)
+        }, topic: 'shipment_updated', logger: logger, kafka_broker: kafka_broker)
       end
     end
 

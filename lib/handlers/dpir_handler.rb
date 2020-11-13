@@ -8,13 +8,13 @@ module DpirHandler
   include InvoiceCreationHelper
 
   class << self
-    def handle_dpir_change(connection, data, logger)
+    def handle_dpir_change(connection, data, logger, kafka_broker)
       parsed_data = JSON.parse data
       dpir_update_data = SQL.get_all_dpir_info(connection, parsed_data['id'])
       if [0,2].include? dpir_update_data[:dispatch_plan]['dispatch_mode']
         @type = parsed_data['type']
         if @type == 'HSN_CHANGE' || @type == 'PRODUCT_NAME_CHANGE'
-          regenerate_invoice(dpir_update_data, parsed_data, logger)
+          regenerate_invoice(dpir_update_data, parsed_data, logger, kafka_broker)
           return
         end
         @note_type = 'CREDIT_NOTE'
@@ -24,13 +24,13 @@ module DpirHandler
         end
         common_data = InvoiceCreationHelper.common_create_invoice_data dpir_update_data
         creation_data = add_information(dpir_update_data, common_data, parsed_data['old'])
-        KafkaHelper::Client.produce(message: creation_data, topic: 'shipment_created', logger: logger)
+        KafkaHelper::Client.produce(message: creation_data, topic: 'shipment_created', logger: logger, kafka_broker: kafka_broker)
       end
     end
 
     private
 
-    def regenerate_invoice(dpir_update_data, parsed_data, logger)
+    def regenerate_invoice(dpir_update_data, parsed_data, logger, kafka_broker)
       product_details = JSON.parse dpir_update_data[:dispatch_plan_item_relation]['product_details']
       change_data = {
           type: @type
@@ -49,7 +49,7 @@ module DpirHandler
       KafkaHelper::Client.produce(message: {
           id: dpir_update_data[:shipment]['buyer_invoice_id'],
           change_data: change_data
-      }, topic: 'regenerate_invoice', logger: logger)
+      }, topic: 'regenerate_invoice', logger: logger, kafka_broker: kafka_broker)
     end
 
     def add_information(data, common_data, old)

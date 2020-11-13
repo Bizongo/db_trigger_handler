@@ -102,9 +102,15 @@ module ShipmentHandler
         dpirs = SQL.get_dispatch_plan_item_relations_unchecked(connection, return_shipment_delivered_data[:dispatch_plan]['id'])
         new_dpirs = []
         dpirs.each do |dpir|
-          dpir['shipped_quantity'] = SQL.get_inwarded_good(connection, dpir['id'])['quantity']
-          unless dpir['shipped_quantity'] == 0
-            new_dpirs << dpir
+          if [3].include? return_shipment_delivered_data[:dispatch_plan]['dispatch_mode']
+            dpir['shipped_quantity'] = SQL.get_inwarded_good(connection, dpir['id'])['quantity']
+            unless dpir['shipped_quantity'] == 0
+              new_dpirs << dpir
+            end
+          else
+            unless dpir['shipped_quantity'] == 0
+              new_dpirs << dpir
+            end
           end
         end
         return_shipment_delivered_data[:dispatch_plan_item_relations] = new_dpirs

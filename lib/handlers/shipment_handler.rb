@@ -84,7 +84,7 @@ module ShipmentHandler
         if shipment['seller_invoice_id'].present?
           update_invoice_data = update_invoice(shipment)
           if shipment['seller_due_data'].present?
-            update_invoice_data.merge!({due_date: shipment['seller_due_date'].strftime("%Y-%m-%d")})
+            update_invoice_data.merge!({due_date: shipment['seller_due_date'].to_date.strftime("%Y-%m-%d")})
           end
           KafkaHelper::Client.produce(message: update_invoice_data, topic: "shipment_updated", logger: logger, kafka_broker: kafka_broker)
         end

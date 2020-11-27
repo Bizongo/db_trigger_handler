@@ -130,7 +130,7 @@ module ShipmentHandler
 
     def update_invoice shipment
       {
-          invoice_number: shipment['seller_invoice_number'],
+          invoice_number: shipment['seller_invoice_no'],
           amount: shipment['total_seller_invoice_amount'].to_f - shipment['actual_charges'].to_f,
           delivery_amount: shipment['actual_charges'].to_f,
           extra_amount: shipment['seller_extra_charges'].to_f,

@@ -13,7 +13,7 @@ module DpirHandler
       dpir_update_data = SQL.get_all_dpir_info(connection, parsed_data['id'])
       if [0,2].include? dpir_update_data[:dispatch_plan]['dispatch_mode']
         @type = parsed_data['type']
-        if @type == 'HSN_CHANGE' || @type == 'PRODUCT_NAME_CHANGE'
+        if @type == 'HSN_CHANGE' || @type == 'ALIAS_NAME_CHANGE'
           regenerate_invoice(dpir_update_data, parsed_data, logger, kafka_broker)
           return
         end
@@ -40,10 +40,10 @@ module DpirHandler
           old_data: parsed_data['old'],
           new_data: product_details['hsn_number']
         })
-      elsif @type == 'PRODUCT_NAME_CHANGE'
+      elsif @type == 'ALIAS_NAME_CHANGE'
         change_data = change_data.merge!({
           old_data: parsed_data['old'],
-          new_data: product_details['product_name']
+          new_data: product_details['alias_name']
         })
       end
       KafkaHelper::Client.produce(message: {
@@ -96,7 +96,7 @@ module DpirHandler
       amount_without_tax = quantity.to_f * price_per_unit.to_f
       @amount = quantity * price_per_unit * ( (@type=='GST_CHANGE'? 0:1)+(gst_percentage.to_f/100))
       line_item_data = {
-          item_name: product_details['product_name'],
+          item_name: product_details['alias_name'],
           hsn: product_details['hsn_number'],
           dispatch_plan_item_relation_id: dpir['id'],
           quantity: quantity,

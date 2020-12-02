@@ -187,7 +187,7 @@ module ShipmentHandler
           quantity = lost_quantity.to_f
         end
         line_item_details << {
-            item_name: product_details['product_name'],
+            item_name: product_details['alias_name'],
             hsn: product_details['hsn_number'],
             quantity: quantity,
             price_per_unit: price_per_unit,

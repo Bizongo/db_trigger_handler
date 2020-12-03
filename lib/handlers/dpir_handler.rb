@@ -95,8 +95,10 @@ module DpirHandler
       end
       amount_without_tax = quantity.to_f * price_per_unit.to_f
       @amount = quantity * price_per_unit * ( (@type=='GST_CHANGE'? 0:1)+(gst_percentage.to_f/100))
+
+      item_name = product_details['alias_name'].present? ? product_details['alias_name'] : product_details['product_name']
       line_item_data = {
-          item_name: product_details['alias_name'],
+          item_name: item_name,
           hsn: product_details['hsn_number'],
           dispatch_plan_item_relation_id: dpir['id'],
           quantity: quantity,

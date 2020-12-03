@@ -13,8 +13,8 @@ module ShipmentHandler
       shipment_create_data = SQL.get_all_shipment_info(connection, parsed_data['id'])
       if [0,2,4].include? shipment_create_data[:dispatch_plan]['dispatch_mode']
         # Create Invoice For seller_to_buyer, warehouse_to_warehouse, warehouse_to_buyer
-        KafkaHelper::Client.produce(message: create_invoice(shipment_create_data),
-                                    topic: "shipment_created", logger: logger, kafka_broker: kafka_broker)
+        # KafkaHelper::Client.produce(message: create_invoice(shipment_create_data),
+        #                             topic: "shipment_created", logger: logger, kafka_broker: kafka_broker)
       elsif [3,6].include? shipment_create_data[:dispatch_plan]['dispatch_mode']
         # Create Invoice for buyer_to_warehouse, buyer_to_seller (non lost returns)
         forward_shipment = SQL.get_shipment(connection, shipment_create_data[:shipment]['forward_shipment_id']);

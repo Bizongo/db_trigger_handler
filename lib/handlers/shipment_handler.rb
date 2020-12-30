@@ -238,7 +238,7 @@ module ShipmentHandler
       if [0,4].include? cn_create_data[:dispatch_plan]['dispatch_mode']
         message = create_invoice(cn_create_data)
         message.merge!({
-                           invoice_id_for_note: cn_create_data['buyer_invoice_id'],
+                           invoice_id_for_note: cn_create_data[:shipment]['buyer_invoice_id'],
                            type: 'CREDIT_NOTE_FOR_INVOICE_NULLIFICATION'
                        })
         KafkaHelper::Client.produce(message: message, topic: "shipment_created", logger: logger, kafka_broker: kafka_broker)

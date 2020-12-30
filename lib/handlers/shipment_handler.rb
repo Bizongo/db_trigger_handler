@@ -73,6 +73,7 @@ module ShipmentHandler
             KafkaHelper::Client.produce(message: update_invoice_data, topic: "shipment_updated", logger: logger, kafka_broker: kafka_broker)
           else
             @comment = 'Shipment Cancelled'
+            logger.info "yaha else me aaya"
             generate_cancel_credit_note(connection, shipment['id'], logger, kafka_broker)
           end
         end
@@ -241,6 +242,7 @@ module ShipmentHandler
                            invoice_id_for_note: cn_create_data[:shipment]['buyer_invoice_id'],
                            type: 'CREDIT_NOTE_FOR_INVOICE_NULLIFICATION'
                        })
+        logger.info("yaha bhi aaya")
         KafkaHelper::Client.produce(message: message, topic: "shipment_created", logger: logger, kafka_broker: kafka_broker)
       end
     end

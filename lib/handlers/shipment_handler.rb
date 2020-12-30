@@ -235,14 +235,17 @@ module ShipmentHandler
     end
 
     def generate_cancel_credit_note(connection, id, logger, kafka_broker)
+      logger.info("yaha aaya 1")
       cn_create_data = SQL.get_all_shipment_info(connection, id)
+      logger.info("yaha aaya 2 #{cn_create_data}")
       if [0,4].include? cn_create_data[:dispatch_plan]['dispatch_mode']
+        logger.info("yaha aaya 3 #{cn_create_data}")
         message = create_invoice(cn_create_data)
         message.merge!({
                            invoice_id_for_note: cn_create_data[:shipment]['buyer_invoice_id'],
                            type: 'CREDIT_NOTE_FOR_INVOICE_NULLIFICATION'
                        })
-        logger.info("yaha bhi aaya")
+        logger.info("yaha aaya 4 #{message}")
         KafkaHelper::Client.produce(message: message, topic: "shipment_created", logger: logger, kafka_broker: kafka_broker)
       end
     end

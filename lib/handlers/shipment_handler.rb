@@ -235,7 +235,7 @@ module ShipmentHandler
 
     def generate_cancel_credit_note(connection, id, logger, kafka_broker)
       cn_create_data = SQL.get_all_shipment_info(connection, id)
-      if [0,4].include? cn_create_data[:dispatch_plan]['dispatch_mode']
+      if [0,2,4].include? cn_create_data[:dispatch_plan]['dispatch_mode']
         message = create_invoice(cn_create_data)
         message.merge!({
                            invoice_id_for_note: cn_create_data[:shipment]['buyer_invoice_id'],

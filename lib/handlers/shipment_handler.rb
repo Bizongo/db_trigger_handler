@@ -80,14 +80,6 @@ module ShipmentHandler
           @comment = 'Return Cancelled'
           generate_return_cancel_debit_note(connection, shipment['id'], logger, kafka_broker)
         end
-      else
-        if shipment['seller_invoice_id'].present?
-          update_invoice_data = update_invoice(shipment)
-          if shipment['seller_due_date'].present?
-            update_invoice_data.merge!({due_date: shipment['seller_due_date'].to_date.strftime("%Y-%m-%d")})
-          end
-          KafkaHelper::Client.produce(message: update_invoice_data, topic: "shipment_updated", logger: logger, kafka_broker: kafka_broker)
-        end
       end
     end
 
@@ -127,16 +119,6 @@ module ShipmentHandler
     end
 
     private
-
-    def update_invoice shipment
-      {
-          invoice_number: shipment['seller_invoice_no'],
-          amount: shipment['total_seller_invoice_amount'].to_f - shipment['actual_charges'].to_f,
-          delivery_amount: shipment['actual_charges'].to_f,
-          extra_amount: shipment['seller_extra_charges'].to_f,
-          id: shipment['seller_invoice_id']
-      }
-    end
 
     def create_invoice data
       common_data = InvoiceCreationHelper.common_create_invoice_data(data)

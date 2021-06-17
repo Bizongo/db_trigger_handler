@@ -66,5 +66,4 @@ LANGUAGE 'plpgsql';
 CREATE TRIGGER shipment_changed AFTER INSERT OR UPDATE OR DELETE
 ON supply_chain.shipments
 FOR EACH ROW
-    WHEN (pg_trigger_depth() = 0)
 EXECUTE PROCEDURE notify_shipment_changes();

@@ -83,41 +83,6 @@ module ShipmentHandler
       end
     end
 
-    def shipment_delivered(connection, data, logger, kafka_broker)
-      parse_data = JSON.parse data
-      return_shipment_delivered_data = SQL.get_all_shipment_info(connection, parse_data['id'])
-      return unless [3,6].include? return_shipment_delivered_data[:dispatch_plan]['dispatch_mode']
-      actions = SQL.get_shipment_actions_by_id(connection, return_shipment_delivered_data[:shipment]['id'], 29)
-      forward_shipment = SQL.get_shipment(connection, return_shipment_delivered_data[:shipment]['forward_shipment_id'])
-      if return_shipment_delivered_data[:shipment]['status'] == 2 && !forward_shipment['delivered_at'].blank? &&
-        actions.blank?
-        dpirs = SQL.get_dispatch_plan_item_relations_unchecked(connection, return_shipment_delivered_data[:dispatch_plan]['id'])
-        new_dpirs = []
-        dpirs.each do |dpir|
-          if [3].include? return_shipment_delivered_data[:dispatch_plan]['dispatch_mode']
-            dpir['shipped_quantity'] = SQL.get_inwarded_good(connection, dpir['id'])['quantity']
-            unless dpir['shipped_quantity'] == 0
-              new_dpirs << dpir
-            end
-          else
-            unless dpir['shipped_quantity'] == 0
-              new_dpirs << dpir
-            end
-          end
-        end
-        return_shipment_delivered_data[:dispatch_plan_item_relations] = new_dpirs
-
-        # Create Invoice for buyer_to_warehouse, buyer_to_seller (non lost returns)
-        @comment = 'Return Delivered'
-        message = create_invoice(return_shipment_delivered_data)
-        message.merge!({
-          invoice_id_for_note: forward_shipment['buyer_invoice_id'],
-          type: 'CREDIT_NOTE'
-        })
-        KafkaHelper::Client.produce(message: message, topic: "shipment_created", logger: logger, kafka_broker: kafka_broker)
-      end
-    end
-
     private
 
     def create_invoice data

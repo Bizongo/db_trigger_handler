@@ -57,8 +57,6 @@ module DbTriggerHandler
                 ShipmentHandler.shipment_create_handler(@connection, data, @logger, @kafka_broker)
               when 'shipment_updated'
                 ShipmentHandler.shipment_updated(@connection, data, @logger, @kafka_broker)
-              when 'shipment_delivered'
-                ShipmentHandler.shipment_delivered(@connection, data, @logger, @kafka_broker)
               when 'shipment_dpir_changed'
                 ShipmentHandler.shipment_dpir_transaction_handler(@connection, data, @logger, @kafka_broker)
               when 'dpir_updated'
@@ -83,7 +81,7 @@ module DbTriggerHandler
     end
 
     def notification_channels
-      %w[shipment_created shipment_delivered shipment_dpir_changed shipment_updated dpir_updated dp_updated]
+      %w[shipment_created shipment_dpir_changed shipment_updated dpir_updated dp_updated]
     end
   end
 end

@@ -50,13 +50,6 @@ BEGIN
     notify_data := json_build_object('id', NEW.id, 'is_debit_note', true);
     PERFORM pg_notify(channel, notify_data::text);
     RETURN NEW;
-  ELSIF TG_OP ilike('UPDATE') and
-  (new.status = 2 and OLD.status is DISTINCT from NEW.status)
-  THEN
-    channel := 'shipment_delivered';
-    notify_data := json_build_object('id', NEW.id);
-    PERFORM pg_notify(channel, notify_data::text);
-    RETURN NEW;
   ELSIF TG_OP ilike('DELETE')
   THEN
     channel := 'shipment_cancelled';

@@ -9,7 +9,7 @@ $$
 LANGUAGE 'plpgsql';
 
 -- Function to notify shipment changes
-CREATE OR REPLACE FUNCTION notify_shipment_changes()
+CREATE OR REPLACE FUNCTION bars.notify_shipment_changes()
   RETURNS trigger AS
 $$
 DECLARE
